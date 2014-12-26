@@ -55,30 +55,6 @@ int main(int argc, char** argv) {
 			blur(delta, delta, Size(i, i), Point(-1, -1));
 		}
 
-
-		/*i = delta.rows;
-		j = delta.cols;
-
-		while(j--) {
-			while(i--) {
-				Vec3b blurred = delta.at<Vec3b>(i, j);
-				
-				if( blurred[0] > 200) {
-					blurred[0] = 255;
-					blurred[1] = 255;
-					blurred[2] = 255;
-				} else {
-					blurred[0] = 0;
-					blurred[1] = 0;
-					blurred[2] = 0;
-				}
-
-				delta.at<Vec3b>(i, j) = blurred;
-			}
-
-			i = delta.rows;
-		}*/
-		//imshow("Canny", delta);
 		threshold(delta, delta, 50, 255, THRESH_BINARY);
 
 		Canny(delta, delta, 20, 20 * 3, 3);
