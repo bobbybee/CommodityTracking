@@ -23,10 +23,9 @@ int main(int argc, char** argv) {
 		absdiff(lastFrame, frame, out2);
 		bitwise_and(out1, out2, delta);
 
-		threshold(delta, delta, 60, 255, THRESH_BINARY);
-		blur(delta, delta, Size(21, 21), Point(-1, -1));
-
 		cvtColor(delta, delta, CV_BGR2GRAY);
+		blur(delta, delta, Size(55, 55), Point(-1, -1));
+		threshold(delta, delta, 5, 255, THRESH_BINARY);
 
 		Canny(delta, delta, 40, 40 * 3, 3);
 
