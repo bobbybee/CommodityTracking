@@ -45,9 +45,16 @@ int main(int argc, char** argv) {
 		Scalar userColour = Scalar(0, 0, 255);
 
 		for(int i = 0; i < contours.size(); ++i) {
-			approxPolyDP(contours[i], approxShape, arcLength(Mat(contours[i]), true) * 0.04, true);
-			drawContours(contourDrawing, contours, i, normalColour, 3);
+			double my_arcLength = arcLength(Mat(contours[i]), true);
+			approxPolyDP(contours[i], approxShape, my_arcLength * 0.04, true);
+
+			if(my_arcLength > maxArclength) {
+				maxArclength = my_arcLength;
+				contourNumForMax = i;
+			}
 		}
+
+		drawContours(contourDrawing, contours, contourNumForMax, userColour, 3);
 
 		Mat flipped;
 		flip(contourDrawing, flipped, 1);
