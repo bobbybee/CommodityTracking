@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 		bitwise_and(out1, out2, delta);
 
 		cvtColor(delta, delta, CV_BGR2GRAY);
-		blur(delta, delta, Size(55, 55), Point(-1, -1));
+		blur(delta, delta, Size(75, 75), Point(-1, -1));
 		threshold(delta, delta, 5, 255, THRESH_BINARY);
 
 		Canny(delta, delta, 40, 40 * 3, 3);
@@ -44,17 +44,48 @@ int main(int argc, char** argv) {
 		Scalar normalColour = Scalar(255, 0, 0);
 		Scalar userColour = Scalar(0, 0, 255);
 
+		double highestX = 0, lowestX = delta.cols,
+				highestY = 0, lowestY = delta.rows;
+
 		for(int i = 0; i < contours.size(); ++i) {
 			double my_arcLength = arcLength(Mat(contours[i]), true);
-			approxPolyDP(contours[i], approxShape, my_arcLength * 0.04, true);
+			approxPolyDP(contours[i], approxShape, my_arcLength, true);
 
-			if(my_arcLength > maxArclength) {
-				maxArclength = my_arcLength;
-				contourNumForMax = i;
+			if(my_arcLength > 1000) {
+				drawContours(contourDrawing, contours, i, userColour, 3);
+			
+				for(int j = 0; j < contours[i].size(); ++j) {
+					if(contours[i][j].x > highestX) {
+						highestX = contours[i][j].x;
+					}
+
+					if(contours[i][j].y > highestY) {
+						highestY = contours[i][j].y;
+					}
+
+					if(contours[i][j].x < lowestX) {
+						lowestX = contours[i][j].x;
+					}
+
+					if(contours[i][j].y < lowestY) {
+						lowestY = contours[i][j].y;
+					}
+				}
 			}
 		}
 
-		drawContours(contourDrawing, contours, contourNumForMax, userColour, 3);
+		Point pt1, pt2;
+		pt1.x = highestX;
+		pt1.y = highestY;
+
+		pt2.x = lowestX;
+		pt2.y = lowestY;
+
+		if(highestX > 0) rectangle(contourDrawing, pt1, pt2, normalColour, 10);
+
+
+		//if(contours.size()) printf("%d\n", contours[contourNumForMax].size());
+		//drawContours(contourDrawing, contours, contourNumForMax, userColour, 3);
 
 		Mat flipped;
 		flip(contourDrawing, flipped, 1);
