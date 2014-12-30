@@ -29,8 +29,8 @@ int main(int argc, char** argv) {
 		bitwise_and(out1, out2, delta);
 
 		cvtColor(delta, delta, CV_BGR2GRAY);
-		blur(delta, delta, Size(75, 75), Point(-1, -1));
-		threshold(delta, delta, 5, 255, THRESH_BINARY);
+		blur(delta, delta, Size(35, 35), Point(-1, -1));
+		threshold(delta, delta, 3, 255, THRESH_BINARY);
 
 		Canny(delta, delta, 40, 40 * 3, 3);
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 			userCorner2 = pt2;
 		}
 
-		//imshow("Contours", flipped);
+		imshow("Contours", contourDrawing);
 		
 		Mat surface = Mat::zeros(contourDrawing.size(), CV_8UC3);
 		
