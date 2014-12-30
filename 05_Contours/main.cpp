@@ -81,7 +81,12 @@ int main(int argc, char** argv) {
 		pt2.x = lowestX;
 		pt2.y = lowestY;
 
-		if(highestX > 0) rectangle(contourDrawing, pt1, pt2, normalColour, 10);
+		if(highestX > 0) {
+			rectangle(contourDrawing, pt1, pt2, normalColour, 10);
+			Rect roi(lowestX, lowestY, highestX - lowestX, highestY - lowestY);
+			Mat image_roi = frame(roi);
+			//imshow("User", image_roi);
+		}
 
 
 		//if(contours.size()) printf("%d\n", contours[contourNumForMax].size());
