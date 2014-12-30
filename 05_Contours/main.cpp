@@ -13,9 +13,14 @@ int main(int argc, char** argv) {
 	stream.read(lastFrame); // fixes a race condition
 	stream.read(twoFrame);
 
+	Point userCorner1, userCorner2;
+
 	for(;;) {
+		Mat flipped_frame;
+		stream.read(flipped_frame);
+
 		Mat frame;
-		stream.read(frame);
+		flip(flipped_frame, frame, 1);
 		
 		Mat out1, out2, delta;
 
@@ -81,8 +86,10 @@ int main(int argc, char** argv) {
 		pt2.x = lowestX;
 		pt2.y = lowestY;
 
-		if(highestX > 0) {
-			rectangle(contourDrawing, pt1, pt2, normalColour, 10);
+		if(highestX > 10) {
+			userCorner1 = pt1;
+			userCorner2 = pt2;
+
 			Rect roi(lowestX, lowestY, highestX - lowestX, highestY - lowestY);
 			Mat image_roi = frame(roi);
 			//imshow("User", image_roi);
@@ -92,11 +99,18 @@ int main(int argc, char** argv) {
 		//if(contours.size()) printf("%d\n", contours[contourNumForMax].size());
 		//drawContours(contourDrawing, contours, contourNumForMax, userColour, 3);
 
-		Mat flipped;
-		flip(contourDrawing, flipped, 1);
-
-		imshow("Contours", flipped);
+		//imshow("Contours", flipped);
 		
+		Mat surface = Mat::zeros(contourDrawing.size(), CV_8UC3);
+		
+		int userMidpoint = abs(userCorner2.x + userCorner1.x) / 2;
+
+		Point paddle1(userMidpoint - 50, 100);
+		Point paddle2(userMidpoint + 50, 100);
+		
+		rectangle(surface, paddle1, paddle2, normalColour, 10);
+		imshow("Surface", surface);
+
 		if(waitKey(10) == 27) {
 			break;
 		}
