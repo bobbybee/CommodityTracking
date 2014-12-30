@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 				bool hasChanged = (abs(pixel[0] - oldPixel[0]) + abs(pixel[1] - oldPixel[1]) + abs(pixel[2] - oldPixel[2])) > 50;
 
 				// keep a total, but slightly scale down the previous sum to keep time-based focus
-				focusedAverage[ (j * delta.rows) + i] = (0.5 * focusedAverage[ (j * delta.rows) + i]) + hasChanged;
+				focusedAverage[ (j * delta.rows) + i] = (0.6 * focusedAverage[ (j * delta.rows) + i]) + hasChanged;
 				
 				if(focusedAverage[ (j * delta.rows) + i] > maxSum) {
 					maxSum = focusedAverage[ (j * delta.rows) + i];
@@ -48,8 +48,6 @@ int main(int argc, char** argv) {
 			while(i--) {
 				double comparison = focusedAverage[ (j * delta.rows) + i] / maxSum;
 				int greyscaleView = (comparison * (double) 255);
-
-				if(greyscaleView < 50) greyscaleView = 0; // noise reduction threshold
 
 				Vec3b pixel;
 				pixel[0] = greyscaleView;

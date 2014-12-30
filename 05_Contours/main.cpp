@@ -60,44 +60,21 @@ int main(int argc, char** argv) {
 				drawContours(contourDrawing, contours, i, userColour, 3);
 			
 				for(int j = 0; j < contours[i].size(); ++j) {
-					if(contours[i][j].x > highestX) {
-						highestX = contours[i][j].x;
-					}
-
-					if(contours[i][j].y > highestY) {
-						highestY = contours[i][j].y;
-					}
-
-					if(contours[i][j].x < lowestX) {
-						lowestX = contours[i][j].x;
-					}
-
-					if(contours[i][j].y < lowestY) {
-						lowestY = contours[i][j].y;
-					}
+					if(contours[i][j].x > highestX) highestX = contours[i][j].x;
+					if(contours[i][j].y > highestY) highestY = contours[i][j].y;
+					if(contours[i][j].x < lowestX) lowestX = contours[i][j].x;
+					if(contours[i][j].y < lowestY) lowestY = contours[i][j].y;
 				}
 			}
 		}
 
-		Point pt1, pt2;
-		pt1.x = highestX;
-		pt1.y = highestY;
-
-		pt2.x = lowestX;
-		pt2.y = lowestY;
+		Point pt1(highestX, highestY);
+		Point pt2(lowestX, lowestY);
 
 		if(highestX > 10) {
 			userCorner1 = pt1;
 			userCorner2 = pt2;
-
-			Rect roi(lowestX, lowestY, highestX - lowestX, highestY - lowestY);
-			Mat image_roi = frame(roi);
-			//imshow("User", image_roi);
 		}
-
-
-		//if(contours.size()) printf("%d\n", contours[contourNumForMax].size());
-		//drawContours(contourDrawing, contours, contourNumForMax, userColour, 3);
 
 		//imshow("Contours", flipped);
 		

@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 				// check if the colour changed more than a threshold
 				bool hasChanged = (abs(pixel[0] - oldPixel[0]) + abs(pixel[1] - oldPixel[1]) + abs(pixel[2] - oldPixel[2])) > 50;
 
-				// keep a total, but slightly scale down the previous sum to keep time-based focus
+				// keep a total, but slightly maintain the previous sum to keep time-based focus
 				focusedAverage[ (j * delta.rows) + i] = (0.01 * focusedAverage[ (j * delta.rows) + i]) + hasChanged;
 				
 				if(focusedAverage[ (j * delta.rows) + i] > maxSum) {
