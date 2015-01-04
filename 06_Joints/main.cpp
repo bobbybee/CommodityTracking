@@ -5,8 +5,8 @@
 using namespace cv;
 using namespace std;
 
-void plotPoint(Mat& mat, Point pt) {
-	rectangle(mat, pt, pt, Scalar(0, 0, 255), 30);
+void plotPoint(Mat& mat, Point pt, Scalar colour) {
+	rectangle(mat, pt, pt, colour, 30);
 }
 
 int main(int argc, char** argv) {
@@ -19,11 +19,6 @@ int main(int argc, char** argv) {
 	stream.read(lastFrame); // fixes a race condition
 	stream.read(twoFrame);
 	stream.read(threeFrame);
-
-	double upperRightBound = 0, upperLeftBound = lastFrame.cols;
-	Point upperLeftBoundP, upperRightBoundP;
-
-	Point centerOfGravity = Point(lastFrame.cols / 2, lastFrame.rows / 2);
 
 	for(;;) {
 		Mat flipped_frame;
@@ -56,22 +51,55 @@ int main(int argc, char** argv) {
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 		vector<Point> approxShape;
+		vector<int> largeContours;
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
 		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
 
+		double totalX = 0, totalY = 0, pointCount = 0; // for computing center
+
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
 
 			if(t_arcLength > 1000) { // remove tiny contours.. don't waste your time
-				drawContours(contourVisualization, contours, i, Scalar(255, 0, 0), 3);
-				drawContours(visualization, contours, i, Scalar(255, 0, 0), 10);
+				largeContours.push_back(i);
+
+				approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
+				
+				for(int j = 0; j < contours[i].size(); ++j) {
+					totalX += contours[i][j].x;
+					totalY += contours[i][j].y;
+					pointCount++;
+				}
+
+				//drawContours(visualization, contours, i, Scalar(255, 0, 0), 10);
 			}
 		}
 
-//		imshow("Relevant", delta);
-		imshow("contourVisualization", contourVisualization);
+		totalX /= pointCount;
+		totalY /= pointCount;
+
+		Point center(totalX, totalY);
+
+		plotPoint(visualization, center, Scalar(255, 0, 0));
+
+		Point upperRight = Point(0, 0), upperLeft = Point(frame.cols, frame.rows);
+
+		for(int i = 0; i < largeContours.size(); ++i) {
+			vector<Point> contour = contours[largeContours[i]];
+
+			for(int j = 0; j < contour.size(); ++j) {
+				if(contour[j].x > upperRight.x && contour[j].y - totalY < -50 && contour[j].x - center.x > 200)
+					upperRight = contour[j];
+				if(contour[j].x < upperLeft.x && contour[j].y - totalY < -50 && center.x - contour[j].x > 200)
+					upperLeft = contour[j];
+			}
+		}
+
+		plotPoint(visualization, upperLeft, Scalar(0, 0, 255));
+		plotPoint(visualization, upperRight, Scalar(0, 0, 255));
+
 		imshow("Visualization", visualization);
 
 		/*
