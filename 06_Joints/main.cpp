@@ -20,6 +20,12 @@ int main(int argc, char** argv) {
 	stream.read(twoFrame);
 	stream.read(threeFrame);
 
+	bool leftHandActive = false;
+	Point leftHand(0, 0);
+	
+	bool rightHandActive = false;
+	Point rightHand(0, 0);
+
 	for(;;) {
 		Mat flipped_frame;
 		stream.read(flipped_frame);
@@ -27,8 +33,9 @@ int main(int argc, char** argv) {
 		Mat frame;
 		flip(flipped_frame, frame, 1);
 		
-		Mat visualization = frame.clone();
-		cvtColor(frame, visualization, CV_BGR2GRAY);
+		//Mat visualization = frame.clone();
+		//cvtColor(frame, visualization, CV_BGR2GRAY);
+		Mat visualization = Mat::zeros(frame.size(), CV_8UC3);
 
 		// find pixels in motion
 		Mat out1, out2, delta;
@@ -82,23 +89,45 @@ int main(int argc, char** argv) {
 
 		Point center(totalX, totalY);
 
-		plotPoint(visualization, center, Scalar(255, 0, 0));
-
 		Point upperRight = Point(0, 0), upperLeft = Point(frame.cols, frame.rows);
 
 		for(int i = 0; i < largeContours.size(); ++i) {
 			vector<Point> contour = contours[largeContours[i]];
 
 			for(int j = 0; j < contour.size(); ++j) {
-				if(contour[j].x > upperRight.x && contour[j].y - totalY < -50 && contour[j].x - center.x > 200)
+				if(contour[j].x > upperRight.x && contour[j].y - totalY < -50 && contour[j].x - center.x > 300)
 					upperRight = contour[j];
-				if(contour[j].x < upperLeft.x && contour[j].y - totalY < -50 && center.x - contour[j].x > 200)
+				if(contour[j].x < upperLeft.x && contour[j].y - totalY < -50 && center.x - contour[j].x > 300)
 					upperLeft = contour[j];
 			}
 		}
 
-		plotPoint(visualization, upperLeft, Scalar(0, 0, 255));
-		plotPoint(visualization, upperRight, Scalar(0, 0, 255));
+		if(upperLeft.x == frame.cols && upperLeft.y == frame.rows)
+			leftHandActive = false;
+		else {
+			leftHand = upperLeft;
+			leftHandActive = true;
+		}
+
+		if(upperRight.x == 0 && upperRight.y == 0)
+			rightHandActive = false;
+		else {
+			rightHand = upperRight;
+			rightHandActive = true;
+		}
+
+
+		plotPoint(visualization, center, Scalar(255, 0, 0));
+		
+		if(leftHandActive) {
+			plotPoint(visualization, leftHand, Scalar(0, 0, 255));
+			line(visualization, leftHand, center, Scalar(0, 255, 0));
+		}
+
+		if(rightHandActive) {
+			plotPoint(visualization, rightHand, Scalar(0, 255, 255));
+			line(visualization, rightHand, center, Scalar(255, 255, 0));
+		}
 
 		imshow("Visualization", visualization);
 
