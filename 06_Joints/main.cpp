@@ -26,6 +26,8 @@ int main(int argc, char** argv) {
 	bool rightHandActive = false;
 	Point rightHand(0, 0);
 
+	Point center(lastFrame.cols / 2, lastFrame.rows / 2);
+
 	for(;;) {
 		Mat flipped_frame;
 		stream.read(flipped_frame);
@@ -33,9 +35,9 @@ int main(int argc, char** argv) {
 		Mat frame;
 		flip(flipped_frame, frame, 1);
 		
-		//Mat visualization = frame.clone();
-		//cvtColor(frame, visualization, CV_BGR2GRAY);
-		Mat visualization = Mat::zeros(frame.size(), CV_8UC3);
+		Mat visualization = frame.clone();
+		cvtColor(frame, visualization, CV_BGR2GRAY);
+		//Mat visualization = Mat::zeros(frame.size(), CV_8UC3);
 
 		// find pixels in motion
 		Mat out1, out2, delta;
@@ -72,7 +74,7 @@ int main(int argc, char** argv) {
 			if(t_arcLength > 1000) { // remove tiny contours.. don't waste your time
 				largeContours.push_back(i);
 
-				approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
+				//approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
 				
 				for(int j = 0; j < contours[i].size(); ++j) {
 					totalX += contours[i][j].x;
@@ -80,14 +82,17 @@ int main(int argc, char** argv) {
 					pointCount++;
 				}
 
-				//drawContours(visualization, contours, i, Scalar(255, 0, 0), 10);
+				drawContours(visualization, contours, i, Scalar(255, 0, 0), 10);
 			}
 		}
 
 		totalX /= pointCount;
 		totalY /= pointCount;
 
-		Point center(totalX, totalY);
+		Point local_center(totalX, totalY);
+
+		if(norm(center - local_center) > 50 && local_center.x > 0)
+			center = local_center;
 
 		Point upperRight = Point(0, 0), upperLeft = Point(frame.cols, frame.rows);
 
@@ -95,23 +100,23 @@ int main(int argc, char** argv) {
 			vector<Point> contour = contours[largeContours[i]];
 
 			for(int j = 0; j < contour.size(); ++j) {
-				if(contour[j].x > upperRight.x && contour[j].y - totalY < -50 && contour[j].x - center.x > 300)
+				if(contour[j].x > upperRight.x && contour[j].y - totalY < 50 && contour[j].x - center.x > 100)
 					upperRight = contour[j];
-				if(contour[j].x < upperLeft.x && contour[j].y - totalY < -50 && center.x - contour[j].x > 300)
+				if(contour[j].x < upperLeft.x && contour[j].y - totalY < 50 && center.x - contour[j].x > 100)
 					upperLeft = contour[j];
 			}
 		}
 
-		if(upperLeft.x == frame.cols && upperLeft.y == frame.rows)
-			leftHandActive = false;
-		else {
+		if(upperLeft.x == frame.cols && upperLeft.y == frame.rows) {
+			//leftHandActive = false;
+		} else {
 			leftHand = upperLeft;
 			leftHandActive = true;
 		}
 
-		if(upperRight.x == 0 && upperRight.y == 0)
-			rightHandActive = false;
-		else {
+		if(upperRight.x == 0 && upperRight.y == 0) {
+			//rightHandActive = false;
+		} else {
 			rightHand = upperRight;
 			rightHandActive = true;
 		}
@@ -120,13 +125,13 @@ int main(int argc, char** argv) {
 		plotPoint(visualization, center, Scalar(255, 0, 0));
 		
 		if(leftHandActive) {
-			plotPoint(visualization, leftHand, Scalar(0, 0, 255));
 			line(visualization, leftHand, center, Scalar(0, 255, 0));
+			plotPoint(visualization, leftHand, Scalar(0, 0, 255));
 		}
 
 		if(rightHandActive) {
-			plotPoint(visualization, rightHand, Scalar(0, 255, 255));
 			line(visualization, rightHand, center, Scalar(255, 255, 0));
+			plotPoint(visualization, rightHand, Scalar(0, 255, 255));
 		}
 
 		imshow("Visualization", visualization);
