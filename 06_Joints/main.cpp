@@ -9,6 +9,22 @@ void plotPoint(Mat& mat, Point pt, Scalar colour) {
 	rectangle(mat, pt, pt, colour, 30);
 }
 
+Mat extractUserMask(Mat& delta) {
+	cvtColor(delta, delta, CV_BGR2GRAY);
+
+	threshold(delta, delta, 12, 255, THRESH_BINARY);
+
+	blur(delta, delta, Size(15, 15), Point(-1, -1));
+	threshold(delta, delta, 9, 255, THRESH_BINARY);
+
+	blur(delta, delta, Size(35, 35), Point(-1, -1));
+	threshold(delta, delta, 19, 255, THRESH_BINARY);
+
+	cvtColor(delta, delta, CV_GRAY2BGR);
+
+	return delta;
+}
+
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
 
@@ -41,27 +57,21 @@ int main(int argc, char** argv) {
 		absdiff(lastFrame, frame, out2);
 		bitwise_and(out1, out2, delta);
 
-		// extract user
-		cvtColor(delta, delta, CV_BGR2GRAY);
-		threshold(delta, delta, 12, 255, THRESH_BINARY);
-		blur(delta, delta, Size(13, 13), Point(-1, -1));
-		threshold(delta, delta, 7, 255, THRESH_BINARY);
-		blur(delta, delta, Size(75, 75), Point(-1, -1));
-		threshold(delta, delta, 11, 255, THRESH_BINARY);
-		/*
-		blur(delta, delta, Size(17, 17), Point(-1, -1));
-		adaptiveThreshold(delta, delta, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 25, -7);	
-		blur(delta, delta, Size(105, 105), Point(-1, -1));
-		threshold(delta, delta, 15, 255, THRESH_BINARY);
-		blur(delta, delta, Size(25, 25), Point(-1, -1));
-		threshold(delta, delta, 1, 255, THRESH_BINARY);*/
 
-		//imshow("User", delta);
+		delta = extractUserMask(delta);
+
+		Mat user;
+		bitwise_and(frame, delta, user);
+
+		imshow("User", user);
 
 		// find contours
-		Canny(delta, delta, 40, 40 * 3, 3);
-		
-		vector<vector<Point> > contours;
+
+		cvtColor(user, user, CV_BGR2GRAY);
+
+		Canny(user, delta, 20, 20 * 3, 3);
+
+		/*vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 		vector<Point> approxShape;
 		vector<int> largeContours;
@@ -80,21 +90,20 @@ int main(int argc, char** argv) {
 			if(t_arcLength > 1000) { // remove tiny contours.. don't waste your time
 				largeContours.push_back(i);
 
-				//approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
+				//approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
 				
-				for(int j = 0; j < contours[i].size(); ++j) {
+				/*for(int j = 0; j < contours[i].size(); ++j) {
 					totalX += contours[i][j].x;
 					totalY += contours[i][j].y;
 					pointCount++;
-				}
+				}*/
 
-				drawContours(visualization, contours, i, Scalar(255, 0, 0), 10);
+				/*drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
-		}
+		}*/
 
-		//imshow("Visualization", visualization);
 
-		totalX /= pointCount;
+		/*totalX /= pointCount;
 		totalY /= pointCount;
 
 		Point local_center(totalX, totalY);
@@ -142,7 +151,7 @@ int main(int argc, char** argv) {
 			plotPoint(visualization, rightHand, Scalar(0, 255, 255));
 		}
 
-		imshow("Visualization", visualization);
+		//imshow("Visualization", visualization);*/
 
 		if(waitKey(16) == 27) {
 			break;
