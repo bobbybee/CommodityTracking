@@ -82,8 +82,8 @@ int main(int argc, char** argv) {
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-		Mat contourVisualization = frame.clone();
+		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		//Mat contourVisualization = frame.clone();
 
 		//double totalX = 0, totalY = 0, pointCount = 0; // for computing center
 		Point topMost(frame.cols, frame.rows), bottomMost(0, 0), leftMost(frame.cols, frame.rows), rightMost(0, 0);
@@ -106,24 +106,65 @@ int main(int argc, char** argv) {
 
 				}
 
-				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
+
+		Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
+
+		// find feet positions
+		Point leftMostAbove(frame.cols, frame.rows), rightMoveAbove(0, 0),
+			  leftMostBelow(frame.cols, frame.rows), rightMoveBelow(0, 0);
+
+		for(int i = 0; i < contours.size(); ++i) {
+			double t_arcLength = arcLength(Mat(contours[i]), true);
+
+			if(t_arcLength > 250) { // remove tiny contours.. don't waste your time
+				largeContours.push_back(i);
+
+				approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
+				
+				for(int j = 0; j < contours[i].size(); ++j) {
+					if(contours[i][j].y > center_of_rect.y) { // below
+						if(contours[i][j].x < leftMostBelow.x) leftMost = contours[i][j];
+						if(contours[i][j].x > rightMoveBelow.x) rightMost = contours[i][j];
+					} else { // above
+						if(contours[i][j].x < leftMostAbove.x) leftMost = contours[i][j];
+						if(contours[i][j].x > rightMoveAbove.x) rightMost = contours[i][j];
+					}
+
+				}
+
+				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+			}
+
+		}
+
 
 		/*totalX /= pointCount;
 		totalY /= pointCount;
 
 		Point local_center(totalX, totalY);*/
 
-		plotPoint(contourVisualization, topMost, Scalar(0, 0, 0));
+
+		/*plotPoint(contourVisualization, topMost, Scalar(0, 0, 0));
 		plotPoint(contourVisualization, bottomMost, Scalar(0, 0, 0));
 		plotPoint(contourVisualization, leftMost, Scalar(0, 0, 0));
 		plotPoint(contourVisualization, rightMost, Scalar(0, 0, 0));
 
-		line(contourVisualization, topMost, rightMost, Scalar(0, 255, 0));
-		line(contourVisualization, rightMost, bottomMost, Scalar(0, 255, 0));
-		line(contourVisualization, bottomMost, leftMost, Scalar(0, 255, 0));
-		line(contourVisualization, leftMost, topMost, Scalar(0, 255, 0));
+		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, rightMost, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, leftMost, center_of_rect, Scalar(0, 255, 0));*/
+
+		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0));
+
+		line(contourVisualization, rightMoveAbove, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0));
+		
+		line(contourVisualization, rightMoveBelow, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0));
 
 		imshow("contourVisualization", contourVisualization);
 
