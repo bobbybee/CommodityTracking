@@ -63,22 +63,27 @@ int main(int argc, char** argv) {
 		Mat user;
 		bitwise_and(frame, delta, user);
 
-		imshow("User", user);
 
 		// find contours
 
 		cvtColor(user, user, CV_BGR2GRAY);
 
-		Canny(user, delta, 20, 20 * 3, 3);
+		blur(user, user, Size(3, 3));
+		Canny(user, delta, 50, 50 * 3, 3);
 
-		/*vector<vector<Point> > contours;
+		//imshow("User", user);
+
+		//imshow("Delta outline", delta);
+
+		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 		vector<Point> approxShape;
 		vector<int> largeContours;
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		Mat contourVisualization = frame.clone();
 
 		double totalX = 0, totalY = 0, pointCount = 0; // for computing center
 
@@ -87,7 +92,7 @@ int main(int argc, char** argv) {
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
 
-			if(t_arcLength > 1000) { // remove tiny contours.. don't waste your time
+			if(t_arcLength > 250) { // remove tiny contours.. don't waste your time
 				largeContours.push_back(i);
 
 				//approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
@@ -98,9 +103,11 @@ int main(int argc, char** argv) {
 					pointCount++;
 				}*/
 
-				/*drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
-		}*/
+		}
+
+		imshow("contourVisualization", contourVisualization);
 
 
 		/*totalX /= pointCount;
