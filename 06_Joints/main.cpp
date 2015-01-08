@@ -108,10 +108,10 @@ int main(int argc, char** argv) {
 			vector<Point> contour = contours[largeContours[i]];
 				
 			for(int j = 0; j < contour.size(); ++j) {
-				if(contour[j].y > center_of_rect.y) { // below
+				if( (contour[j].y - center_of_rect.y ) > 50) { // below
 					if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
 					if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
-				} else { // above
+				} else if( (center_of_rect.y - contour[j].y) > 50) { // above
 					if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
 					if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
 				}
