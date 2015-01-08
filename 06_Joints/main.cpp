@@ -9,6 +9,10 @@ void plotPoint(Mat& mat, Point pt, Scalar colour) {
 	rectangle(mat, pt, pt, colour, 30);
 }
 
+// the black-and-white user mask is found from
+// the motion extracted image through a series
+// of various blurs and corresponding thresholds
+
 Mat extractUserMask(Mat& delta) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
@@ -57,23 +61,20 @@ int main(int argc, char** argv) {
 		absdiff(lastFrame, frame, out2);
 		bitwise_and(out1, out2, delta);
 
+		// extract the user mask
+		// and use it to mask out the user in the original image
 
 		delta = extractUserMask(delta);
 
 		Mat user;
 		bitwise_and(frame, delta, user);
 
-
-		// find contours
+		// find contours in the user image after removing noise
 
 		cvtColor(user, user, CV_BGR2GRAY);
 
 		blur(user, user, Size(3, 3));
 		Canny(user, delta, 50, 50 * 3, 3);
-
-		//imshow("User", user);
-
-		//imshow("Delta outline", delta);
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -82,13 +83,10 @@ int main(int argc, char** argv) {
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-		//Mat contourVisualization = frame.clone();
+		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		Mat contourVisualization = frame.clone();
 
-		//double totalX = 0, totalY = 0, pointCount = 0; // for computing center
 		Point topMost(frame.cols, frame.rows), bottomMost(0, 0), leftMost(frame.cols, frame.rows), rightMost(0, 0);
-
-		Mat visualization = frame.clone(); // visualization of skeleton-tracking
 
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
@@ -103,118 +101,39 @@ int main(int argc, char** argv) {
 					if(contours[i][j].y > bottomMost.y) bottomMost = contours[i][j];
 					if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
 					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
-
 				}
-
-				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
 
 		Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
 
-		// find feet positions
+		// find outer limb positions
 		Point leftMostAbove(frame.cols, frame.rows), rightMostAbove(0, 0),
 			  leftMostBelow(frame.cols, frame.rows), rightMostBelow(0, 0);
 
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-
-			if(t_arcLength > 250) { // remove tiny contours.. don't waste your time
-				largeContours.push_back(i);
-
-				approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
+		for(int i = 0; i < largeContours.size(); ++i) {
+			vector<Point> contour = contours[largeContours[i]];
 				
-				for(int j = 0; j < contours[i].size(); ++j) {
-					if(contours[i][j].y > center_of_rect.y) { // below
-						if(contours[i][j].x < leftMostBelow.x) leftMostBelow = contours[i][j];
-						if(contours[i][j].x > rightMostBelow.x) rightMostBelow = contours[i][j];
-					} else { // above
-						if(contours[i][j].x < leftMostAbove.x) leftMostAbove = contours[i][j];
-						if(contours[i][j].x > rightMostAbove.x) rightMostAbove = contours[i][j];
-					}
-
+			for(int j = 0; j < contour.size(); ++j) {
+				if(contour[j].y > center_of_rect.y) { // below
+					if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
+					if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
+				} else { // above
+					if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
+					if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
 				}
-
-				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
-
 		}
 
-
-		/*totalX /= pointCount;
-		totalY /= pointCount;
-
-		Point local_center(totalX, totalY);*/
-
-
-		/*plotPoint(contourVisualization, topMost, Scalar(0, 0, 0));
-		plotPoint(contourVisualization, bottomMost, Scalar(0, 0, 0));
-		plotPoint(contourVisualization, leftMost, Scalar(0, 0, 0));
-		plotPoint(contourVisualization, rightMost, Scalar(0, 0, 0));
-
-		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, rightMost, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, leftMost, center_of_rect, Scalar(0, 255, 0));*/
+		// draw the skeleton
 
 		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
-		//line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0), 20);
-
 		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
 		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		
 		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 
 		imshow("contourVisualization", contourVisualization);
-
-
-		/*
-
-		if(norm(center - local_center) > 50 && local_center.x > 0)
-			center = local_center;
-
-		Point upperRight = Point(0, 0), upperLeft = Point(frame.cols, frame.rows);
-
-		for(int i = 0; i < largeContours.size(); ++i) {
-			vector<Point> contour = contours[largeContours[i]];
-
-			for(int j = 0; j < contour.size(); ++j) {
-				if(contour[j].x > upperRight.x && contour[j].y - totalY < 50 && contour[j].x - center.x > 75)
-					upperRight = contour[j];
-				if(contour[j].x < upperLeft.x && contour[j].y - totalY < 50 && center.x - contour[j].x > 75)
-					upperLeft = contour[j];
-			}
-		}
-
-		if(upperLeft.x == frame.cols && upperLeft.y == frame.rows) {
-			//leftHandActive = false;
-		} else {
-			leftHand = upperLeft;
-			leftHandActive = true;
-		}
-
-		if(upperRight.x == 0 && upperRight.y == 0) {
-			//rightHandActive = false;
-		} else {
-			rightHand = upperRight;
-			rightHandActive = true;
-		}
-
-
-		plotPoint(visualization, center, Scalar(255, 0, 0));
-		
-		if(leftHandActive) {
-			line(visualization, leftHand, center, Scalar(0, 255, 0));
-			plotPoint(visualization, leftHand, Scalar(0, 0, 255));
-		}
-
-		if(rightHandActive) {
-			line(visualization, rightHand, center, Scalar(255, 255, 0));
-			plotPoint(visualization, rightHand, Scalar(0, 255, 255));
-		}
-
-		//imshow("Visualization", visualization);*/
 
 		if(waitKey(16) == 27) {
 			break;
