@@ -32,21 +32,11 @@ Mat extractUserMask(Mat& delta) {
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
 
-	Mat lastFrame;
-	Mat twoFrame;
-	Mat threeFrame;
+	Mat lastFrame, twoFrame, threeFrame;
 
-	stream.read(lastFrame); // fixes a race condition
+	stream.read(lastFrame); // fixes a race condition in the first few frames
 	stream.read(twoFrame);
 	stream.read(threeFrame);
-
-	bool leftHandActive = false;
-	Point leftHand(0, 0);
-	
-	bool rightHandActive = false;
-	Point rightHand(0, 0);
-
-	Point center(lastFrame.cols / 2, lastFrame.rows / 2);
 
 	for(;;) {
 		// read frame from webcam; flip orientation to natural orientation
@@ -86,7 +76,10 @@ int main(int argc, char** argv) {
 		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
 		Mat contourVisualization = frame.clone();
 
-		Point topMost(frame.cols, frame.rows), bottomMost(0, 0), leftMost(frame.cols, frame.rows), rightMost(0, 0);
+		Point topMost(frame.cols, frame.rows),
+			  bottomMost(0, 0),
+			  leftMost(frame.cols, frame.rows),
+			  rightMost(0, 0);
 
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
