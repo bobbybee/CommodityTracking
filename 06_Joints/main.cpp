@@ -82,8 +82,8 @@ int main(int argc, char** argv) {
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-		Mat contourVisualization = frame.clone();
+		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		//Mat contourVisualization = frame.clone();
 
 		//double totalX = 0, totalY = 0, pointCount = 0; // for computing center
 		Point topMost(frame.cols, frame.rows), bottomMost(0, 0), leftMost(frame.cols, frame.rows), rightMost(0, 0);
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
 
 				}
 
-				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 
 		}
@@ -157,14 +157,14 @@ int main(int argc, char** argv) {
 		line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0));
 		line(contourVisualization, leftMost, center_of_rect, Scalar(0, 255, 0));*/
 
-		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
+		//line(contourVisualization, bottomMost, center_of_rect, Scalar(0, 255, 0), 20);
 
-		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
 		
-		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0));
-		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0));
+		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 
 		imshow("contourVisualization", contourVisualization);
 
