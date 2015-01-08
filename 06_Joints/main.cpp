@@ -85,7 +85,8 @@ int main(int argc, char** argv) {
 		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
 		Mat contourVisualization = frame.clone();
 
-		double totalX = 0, totalY = 0, pointCount = 0; // for computing center
+		//double totalX = 0, totalY = 0, pointCount = 0; // for computing center
+		Point topMost(frame.cols, frame.rows), bottomMost(0, 0), leftMost(frame.cols, frame.rows), rightMost(0, 0);
 
 		Mat visualization = frame.clone(); // visualization of skeleton-tracking
 
@@ -95,25 +96,39 @@ int main(int argc, char** argv) {
 			if(t_arcLength > 250) { // remove tiny contours.. don't waste your time
 				largeContours.push_back(i);
 
-				//approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
+				approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
 				
-				/*for(int j = 0; j < contours[i].size(); ++j) {
-					totalX += contours[i][j].x;
-					totalY += contours[i][j].y;
-					pointCount++;
-				}*/
+				for(int j = 0; j < contours[i].size(); ++j) {
+					if(contours[i][j].y < topMost.y) topMost = contours[i][j];
+					if(contours[i][j].y > bottomMost.y) bottomMost = contours[i][j];
+					if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
+					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
+
+				}
 
 				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
 
-		imshow("contourVisualization", contourVisualization);
-
-
 		/*totalX /= pointCount;
 		totalY /= pointCount;
 
-		Point local_center(totalX, totalY);
+		Point local_center(totalX, totalY);*/
+
+		plotPoint(contourVisualization, topMost, Scalar(0, 0, 0));
+		plotPoint(contourVisualization, bottomMost, Scalar(0, 0, 0));
+		plotPoint(contourVisualization, leftMost, Scalar(0, 0, 0));
+		plotPoint(contourVisualization, rightMost, Scalar(0, 0, 0));
+
+		line(contourVisualization, topMost, rightMost, Scalar(0, 255, 0));
+		line(contourVisualization, rightMost, bottomMost, Scalar(0, 255, 0));
+		line(contourVisualization, bottomMost, leftMost, Scalar(0, 255, 0));
+		line(contourVisualization, leftMost, topMost, Scalar(0, 255, 0));
+
+		imshow("contourVisualization", contourVisualization);
+
+
+		/*
 
 		if(norm(center - local_center) > 50 && local_center.x > 0)
 			center = local_center;
