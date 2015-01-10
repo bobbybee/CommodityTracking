@@ -16,13 +16,13 @@ void plotPoint(Mat& mat, Point pt, Scalar colour) {
 Mat extractUserMask(Mat& delta) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
-	threshold(delta, delta, 12, 255, THRESH_BINARY);
+	threshold(delta, delta, 20, 255, THRESH_BINARY);
 
 	blur(delta, delta, Size(15, 15), Point(-1, -1));
-	threshold(delta, delta, 9, 255, THRESH_BINARY);
+	threshold(delta, delta, 15, 255, THRESH_BINARY);
 
 	blur(delta, delta, Size(35, 35), Point(-1, -1));
-	threshold(delta, delta, 19, 255, THRESH_BINARY);
+	threshold(delta, delta, 25, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -95,6 +95,8 @@ int main(int argc, char** argv) {
 					if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
 					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
 				}
+
+				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
 
