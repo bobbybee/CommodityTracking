@@ -13,24 +13,33 @@ void plotPoint(Mat& mat, Point pt, Scalar colour) {
 // the motion extracted image through a series
 // of various blurs and corresponding thresholds
 
-Mat extractUserMask(Mat& delta) {
+Mat extractUserMask(Mat& delta, double sensitivity) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
-	threshold(delta, delta, 20, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 	blur(delta, delta, Size(15, 15), Point(-1, -1));
-	threshold(delta, delta, 15, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 15, 255, THRESH_BINARY);
 
 	blur(delta, delta, Size(35, 35), Point(-1, -1));
-	threshold(delta, delta, 25, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 25, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
 	return delta;
 }
 
+void on_trackbar(int, void*) {}
+
 int main(int argc, char** argv) {
-	VideoCapture stream(0);
+	VideoCapture stream("output.mp4");
+
+	int minimumArclength = 150;
+	int userSensitivity = 255;
+
+	namedWindow("Test Space", 1);
+	createTrackbar("Minimum Arc Length", "Test Space", &minimumArclength, 500, on_trackbar);
+	createTrackbar("Sensitivity", "Test Space", &userSensitivity, 1000, on_trackbar);
 
 	Mat lastFrame, twoFrame, threeFrame;
 
@@ -42,9 +51,12 @@ int main(int argc, char** argv) {
 		// read frame from webcam; flip orientation to natural orientation
 		Mat flipped_frame, frame;
 	
-		stream.read(flipped_frame);
-		flip(flipped_frame, frame, 1);
-		
+		//stream.read(flipped_frame);
+		//flip(flipped_frame, frame, 1);
+		stream.read(frame);
+
+		imshow("Original", frame);
+
 		// find pixels in motion
 		Mat out1, out2, delta;
 		absdiff(twoFrame, frame, out1);
@@ -54,7 +66,7 @@ int main(int argc, char** argv) {
 		// extract the user mask
 		// and use it to mask out the user in the original image
 
-		delta = extractUserMask(delta);
+		delta = extractUserMask(delta, userSensitivity / 256);
 
 		Mat user;
 		bitwise_and(frame, delta, user);
@@ -73,8 +85,8 @@ int main(int argc, char** argv) {
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		//Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-		Mat contourVisualization = frame.clone();
+		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+		//Mat contourVisualization = frame.clone();
 
 		Point topMost(frame.cols, frame.rows),
 			  bottomMost(0, 0),
@@ -84,7 +96,7 @@ int main(int argc, char** argv) {
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
 
-			if(t_arcLength > 250) { // remove tiny contours.. don't waste your time
+			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 				largeContours.push_back(i);
 
 				approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
@@ -96,9 +108,11 @@ int main(int argc, char** argv) {
 					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
 				}
 
-				//drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
+
+		imshow("Test Space", contourVisualization);
 
 		Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
 
@@ -128,9 +142,9 @@ int main(int argc, char** argv) {
 		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 
-		imshow("contourVisualization", contourVisualization);
+		//imshow("contourVisualization", contourVisualization);
 
-		if(waitKey(16) == 27) {
+		if(waitKey(1) == 27) {
 			break;
 		}
 
