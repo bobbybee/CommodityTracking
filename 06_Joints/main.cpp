@@ -30,12 +30,25 @@ class FrameHistory {
 			return delta;
 		}
 
+		Mat getLastFrame() {
+			return m_lastFrame;
+		}
+
 	private:
 		Mat m_lastFrame, m_twoFrame;
 };
 
 class Skeleton {
+public:
+	Point center_of_rect, rightMostAbove, rightMostBelow, leftMostAbove, leftMostBelow, topMost;
 
+	void visualize(Mat visualization) {
+		line(visualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
+		line(visualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+		line(visualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+		line(visualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		line(visualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+	}
 };
 
 // the black-and-white user mask is found from
@@ -91,13 +104,6 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 
 	findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-	Mat contourVisualization;
-
-	//if(showOriginal)
-		contourVisualization  = frame.clone();
-	//else
-	//	contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-
 	Point topMost(frame.cols, frame.rows),
 		  bottomMost(0, 0),
 		  leftMost(frame.cols, frame.rows),
@@ -118,7 +124,7 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 				if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
 			}
 
-			//if(showContours) drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+			// drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 		}
 	}
 
@@ -142,19 +148,14 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 		}
 	}
 
-	/*if(showSkeleton) { 	// draw the skeleton
-		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-	}*/
+	// assemble skeleton structure
 
-	imshow("Output", contourVisualization);
-
-	if(waitKey(1) == 27) {
-		//break;
-	}
+	final.center_of_rect = center_of_rect;
+	final.leftMostAbove = leftMostAbove;
+	final.leftMostBelow = leftMostBelow;
+	final.rightMostAbove = rightMostAbove;
+	final.rightMostBelow = rightMostBelow;
+	final.topMost = topMost;
 
 	history.append(frame);
 
@@ -167,14 +168,13 @@ int main(int argc, char** argv) {
 	int minimumArclength = 150;
 	int userSensitivity = 255;
 
-	int showOriginal = 0, showContours = 0, showSkeleton = 0, _flip = 0;
+	int showOriginal = 0, showSkeleton = 0, _flip = 0;
 
 	namedWindow("Settings", 1);
 	createTrackbar("Minimum Arc Length", "Settings", &minimumArclength, 500);
 	createTrackbar("Sensitivity", "Settings", &userSensitivity, 1000);
 
 	createTrackbar("Show original?", "Settings", &showOriginal, 1);
-	createTrackbar("Show contours?", "Settings", &showContours, 1);
 	createTrackbar("Show skeleton?", "Settings", &showSkeleton, 1);
 	createTrackbar("Flip?", "Settings", &_flip, 1);
 
@@ -182,6 +182,22 @@ int main(int argc, char** argv) {
 
 	for(;;) {
 		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity);
+		
+		Mat visualization;
+
+		if(showOriginal) {
+			visualization = history.getLastFrame().clone();
+		} else {
+			visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
+		}
+		
+
+		skeleton.visualize(visualization);
+		imshow("Visualization", visualization);
+
+		if(waitKey(1) == 27) {
+			break;
+		}
 	}
 
 	return 0;
