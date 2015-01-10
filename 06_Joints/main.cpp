@@ -9,6 +9,35 @@ void plotPoint(Mat& mat, Point pt, Scalar colour) {
 	rectangle(mat, pt, pt, colour, 30);
 }
 
+class FrameHistory {
+	public:
+		FrameHistory(VideoCapture& stream) {
+			stream.read(m_lastFrame); // fixes a race condition in the first few frames
+			stream.read(m_twoFrame);
+		}
+
+		void append(Mat frame) {
+			m_twoFrame = m_lastFrame;
+			m_lastFrame = frame;
+		}
+
+		Mat motion(Mat frame) {
+			Mat out1, out2, delta;
+			absdiff(m_twoFrame, frame, out1);
+			absdiff(m_lastFrame, frame, out2);
+			bitwise_and(out1, out2, delta);
+
+			return delta;
+		}
+
+	private:
+		Mat m_lastFrame, m_twoFrame;
+};
+
+class Skeleton {
+
+};
+
 // the black-and-white user mask is found from
 // the motion extracted image through a series
 // of various blurs and corresponding thresholds
@@ -29,6 +58,109 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	return delta;
 }
 
+Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, int minimumArclength, int userSensitivity) {
+	Skeleton final;
+
+	// read frame from webcam; flip orientation to natural orientation
+	Mat flipped_frame, frame;
+	
+	if(_flip) {
+		stream.read(flipped_frame);
+		flip(flipped_frame, frame, 1);
+	} else {
+		stream.read(frame);
+	}
+
+	Mat delta = history.motion(frame);
+	delta = extractUserMask(delta, userSensitivity / 256);
+
+	Mat user;
+	bitwise_and(frame, delta, user);
+
+	// find contours in the user image after removing noise
+
+	cvtColor(user, user, CV_BGR2GRAY);
+
+	blur(user, user, Size(3, 3));
+	Canny(user, delta, 50, 50 * 3, 3);
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	vector<Point> approxShape;
+	vector<int> largeContours;
+
+	findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+	Mat contourVisualization;
+
+	//if(showOriginal)
+		contourVisualization  = frame.clone();
+	//else
+	//	contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
+
+	Point topMost(frame.cols, frame.rows),
+		  bottomMost(0, 0),
+		  leftMost(frame.cols, frame.rows),
+		  rightMost(0, 0);
+
+	for(int i = 0; i < contours.size(); ++i) {
+		double t_arcLength = arcLength(Mat(contours[i]), true);
+
+		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+			largeContours.push_back(i);
+
+			approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
+			
+			for(int j = 0; j < contours[i].size(); ++j) {
+				if(contours[i][j].y < topMost.y) topMost = contours[i][j];
+				if(contours[i][j].y > bottomMost.y) bottomMost = contours[i][j];
+				if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
+				if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
+			}
+
+			//if(showContours) drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+		}
+	}
+
+	Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
+
+	// find outer limb positions
+	Point leftMostAbove(frame.cols, frame.rows), rightMostAbove(0, 0),
+		  leftMostBelow(frame.cols, frame.rows), rightMostBelow(0, 0);
+
+	for(int i = 0; i < largeContours.size(); ++i) {
+		vector<Point> contour = contours[largeContours[i]];
+			
+		for(int j = 0; j < contour.size(); ++j) {
+			if( (contour[j].y - center_of_rect.y ) > 50) { // below
+				if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
+				if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
+			} else if( (center_of_rect.y - contour[j].y) > 50) { // above
+				if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
+				if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
+			}
+		}
+	}
+
+	/*if(showSkeleton) { 	// draw the skeleton
+		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+	}*/
+
+	imshow("Output", contourVisualization);
+
+	if(waitKey(1) == 27) {
+		//break;
+	}
+
+	history.append(frame);
+
+	return final;
+}
+
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
 
@@ -46,121 +178,10 @@ int main(int argc, char** argv) {
 	createTrackbar("Show skeleton?", "Settings", &showSkeleton, 1);
 	createTrackbar("Flip?", "Settings", &_flip, 1);
 
-	Mat lastFrame, twoFrame, threeFrame;
-
-	stream.read(lastFrame); // fixes a race condition in the first few frames
-	stream.read(twoFrame);
-	stream.read(threeFrame);
+	FrameHistory history(stream);
 
 	for(;;) {
-		// read frame from webcam; flip orientation to natural orientation
-		Mat flipped_frame, frame;
-		
-		if(_flip) {
-			stream.read(flipped_frame);
-			flip(flipped_frame, frame, 1);
-		} else {
-			stream.read(frame);
-		}
-
-		// find pixels in motion
-		Mat out1, out2, delta;
-		absdiff(twoFrame, frame, out1);
-		absdiff(lastFrame, frame, out2);
-		bitwise_and(out1, out2, delta);
-
-		// extract the user mask
-		// and use it to mask out the user in the original image
-
-		delta = extractUserMask(delta, userSensitivity / 256);
-
-		Mat user;
-		bitwise_and(frame, delta, user);
-
-		// find contours in the user image after removing noise
-
-		cvtColor(user, user, CV_BGR2GRAY);
-
-		blur(user, user, Size(3, 3));
-		Canny(user, delta, 50, 50 * 3, 3);
-
-		vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
-		vector<Point> approxShape;
-		vector<int> largeContours;
-
-		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-		Mat contourVisualization;
-
-		if(showOriginal)
-			contourVisualization  = frame.clone();
-		else
-			contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-
-		Point topMost(frame.cols, frame.rows),
-			  bottomMost(0, 0),
-			  leftMost(frame.cols, frame.rows),
-			  rightMost(0, 0);
-
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-				largeContours.push_back(i);
-
-				approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
-				
-				for(int j = 0; j < contours[i].size(); ++j) {
-					if(contours[i][j].y < topMost.y) topMost = contours[i][j];
-					if(contours[i][j].y > bottomMost.y) bottomMost = contours[i][j];
-					if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
-					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
-				}
-
-				if(showContours) drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
-			}
-		}
-
-		Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
-
-		// find outer limb positions
-		Point leftMostAbove(frame.cols, frame.rows), rightMostAbove(0, 0),
-			  leftMostBelow(frame.cols, frame.rows), rightMostBelow(0, 0);
-
-		for(int i = 0; i < largeContours.size(); ++i) {
-			vector<Point> contour = contours[largeContours[i]];
-				
-			for(int j = 0; j < contour.size(); ++j) {
-				if( (contour[j].y - center_of_rect.y ) > 50) { // below
-					if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
-					if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
-				} else if( (center_of_rect.y - contour[j].y) > 50) { // above
-					if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
-					if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
-				}
-			}
-		}
-
-		// draw the skeleton
-
-		if(showSkeleton) {
-			line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
-			line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-			line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-			line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-			line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-		}
-
-		imshow("Output", contourVisualization);
-
-		if(waitKey(1) == 27) {
-			break;
-		}
-
-		threeFrame = twoFrame;
-		twoFrame = lastFrame;
-		lastFrame = frame;
+		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity);
 	}
 
 	return 0;
