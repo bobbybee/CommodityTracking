@@ -29,17 +29,22 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	return delta;
 }
 
-void on_trackbar(int, void*) {}
-
 int main(int argc, char** argv) {
-	VideoCapture stream("output.mp4");
+	VideoCapture stream(0);
 
 	int minimumArclength = 150;
 	int userSensitivity = 255;
 
-	namedWindow("Test Space", 1);
-	createTrackbar("Minimum Arc Length", "Test Space", &minimumArclength, 500, on_trackbar);
-	createTrackbar("Sensitivity", "Test Space", &userSensitivity, 1000, on_trackbar);
+	int showOriginal = 0, showContours = 0, showSkeleton = 0, _flip = 0;
+
+	namedWindow("Settings", 1);
+	createTrackbar("Minimum Arc Length", "Settings", &minimumArclength, 500);
+	createTrackbar("Sensitivity", "Settings", &userSensitivity, 1000);
+
+	createTrackbar("Show original?", "Settings", &showOriginal, 1);
+	createTrackbar("Show contours?", "Settings", &showContours, 1);
+	createTrackbar("Show skeleton?", "Settings", &showSkeleton, 1);
+	createTrackbar("Flip?", "Settings", &_flip, 1);
 
 	Mat lastFrame, twoFrame, threeFrame;
 
@@ -50,12 +55,13 @@ int main(int argc, char** argv) {
 	for(;;) {
 		// read frame from webcam; flip orientation to natural orientation
 		Mat flipped_frame, frame;
-	
-		//stream.read(flipped_frame);
-		//flip(flipped_frame, frame, 1);
-		stream.read(frame);
-
-		imshow("Original", frame);
+		
+		if(_flip) {
+			stream.read(flipped_frame);
+			flip(flipped_frame, frame, 1);
+		} else {
+			stream.read(frame);
+		}
 
 		// find pixels in motion
 		Mat out1, out2, delta;
@@ -85,8 +91,12 @@ int main(int argc, char** argv) {
 
 		findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		Mat contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
-		//Mat contourVisualization = frame.clone();
+		Mat contourVisualization;
+
+		if(showOriginal)
+			contourVisualization  = frame.clone();
+		else
+			contourVisualization = Mat::zeros(delta.size(), CV_8UC3);
 
 		Point topMost(frame.cols, frame.rows),
 			  bottomMost(0, 0),
@@ -108,11 +118,9 @@ int main(int argc, char** argv) {
 					if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
 				}
 
-				drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
+				if(showContours) drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
 			}
 		}
-
-		imshow("Test Space", contourVisualization);
 
 		Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
 
@@ -136,13 +144,15 @@ int main(int argc, char** argv) {
 
 		// draw the skeleton
 
-		line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-		line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		if(showSkeleton) {
+			line(contourVisualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
+			line(contourVisualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+			line(contourVisualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
+			line(contourVisualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+			line(contourVisualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		}
 
-		//imshow("contourVisualization", contourVisualization);
+		imshow("Output", contourVisualization);
 
 		if(waitKey(1) == 27) {
 			break;
