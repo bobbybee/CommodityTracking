@@ -5,10 +5,6 @@
 using namespace cv;
 using namespace std;
 
-void plotPoint(Mat& mat, Point pt, Scalar colour) {
-	rectangle(mat, pt, pt, colour, 30);
-}
-
 class FrameHistory {
 	public:
 		FrameHistory(VideoCapture& stream) {
