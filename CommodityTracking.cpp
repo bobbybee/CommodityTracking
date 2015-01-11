@@ -133,3 +133,18 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 
 	return final;
 }
+
+void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval) {
+	while(*userSensitivity < 1000) {
+		Skeleton skeleton = getSkeleton(stream, history, false, minimumArclength, *userSensitivity);
+		
+		if(skeleton.rightMostAbove.x == 0) {
+			// optimal calibration found
+			return;
+		}
+
+		*userSensitivity += interval;
+	}
+
+	// if this point is reached, all hope is lost :(
+}

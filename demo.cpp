@@ -5,9 +5,12 @@
 
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
+	FrameHistory history(stream);
 
 	int minimumArclength = 150;
 	int userSensitivity = 255;
+
+	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1);
 
 	int showOriginal = 0, showSkeleton = 0, _flip = 0;
 
@@ -19,7 +22,6 @@ int main(int argc, char** argv) {
 	createTrackbar("Show skeleton?", "Settings", &showSkeleton, 1);
 	createTrackbar("Flip?", "Settings", &_flip, 1);
 
-	FrameHistory history(stream);
 
 	for(;;) {
 		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity);
