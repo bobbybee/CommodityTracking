@@ -7,32 +7,36 @@ using namespace std;
 
 class FrameHistory {
 	public:
-		FrameHistory(VideoCapture& stream) {
-			stream.read(m_lastFrame); // fixes a race condition in the first few frames
-			stream.read(m_twoFrame);
-		}
-
-		void append(Mat frame) {
-			m_twoFrame = m_lastFrame;
-			m_lastFrame = frame;
-		}
-
-		Mat motion(Mat frame) {
-			Mat out1, out2, delta;
-			absdiff(m_twoFrame, frame, out1);
-			absdiff(m_lastFrame, frame, out2);
-			bitwise_and(out1, out2, delta);
-
-			return delta;
-		}
-
-		Mat getLastFrame() {
-			return m_lastFrame;
-		}
-
+		FrameHistory(VideoCapture& stream);
+		void append(Mat frame);
+		Mat motion(Mat frame);
+		Mat getLastFrame();
 	private:
 		Mat m_lastFrame, m_twoFrame;
 };
+
+FrameHistory::FrameHistory(VideoCapture& stream) {
+	stream.read(m_lastFrame); // fixes a race condition in the first few frames
+	stream.read(m_twoFrame);
+}
+
+void FrameHistory::append(Mat frame) {
+	m_twoFrame = m_lastFrame;
+	m_lastFrame = frame;
+}
+
+Mat FrameHistory::motion(Mat frame) {
+	Mat out1, out2, delta;
+	absdiff(m_twoFrame, frame, out1);
+	absdiff(m_lastFrame, frame, out2);
+	bitwise_and(out1, out2, delta);
+
+	return delta;
+}
+
+Mat FrameHistory::getLastFrame() {
+	return m_lastFrame;
+}
 
 class Skeleton {
 public:
