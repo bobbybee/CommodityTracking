@@ -9,8 +9,9 @@ int main(int argc, char** argv) {
 
 	int minimumArclength = 150;
 	int userSensitivity = 255;
+	int limbGracePeriod = 50;
 
-	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1);
+	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1, limbGracePeriod);
 
 	int showOriginal = 0, showSkeleton = 0, _flip = 0;
 
@@ -24,7 +25,7 @@ int main(int argc, char** argv) {
 
 
 	for(;;) {
-		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity);
+		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity, limbGracePeriod);
 		
 		Mat visualization;
 

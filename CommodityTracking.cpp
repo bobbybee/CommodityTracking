@@ -43,7 +43,7 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	return delta;
 }
 
-Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, int minimumArclength, int userSensitivity) {
+Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
 	Skeleton final;
 
 	// read frame from webcam; flip orientation to natural orientation
@@ -110,10 +110,10 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 		vector<Point> contour = contours[largeContours[i]];
 			
 		for(int j = 0; j < contour.size(); ++j) {
-			if( (contour[j].y - center_of_rect.y ) > 50) { // below
+			if( (contour[j].y - center_of_rect.y ) > limbGracePeriod) { // below
 				if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
 				if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
-			} else if( (center_of_rect.y - contour[j].y) > 50) { // above
+			} else if( (center_of_rect.y - contour[j].y) > limbGracePeriod) { // above
 				if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
 				if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
 			}
@@ -134,9 +134,9 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 	return final;
 }
 
-void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval) {
+void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod) {
 	while(*userSensitivity < 1000) {
-		Skeleton skeleton = getSkeleton(stream, history, false, minimumArclength, *userSensitivity);
+		Skeleton skeleton = getSkeleton(stream, history, false, minimumArclength, *userSensitivity, limbGracePeriod);
 		
 		if(skeleton.rightMostAbove.x == 0) {
 			// optimal calibration found
