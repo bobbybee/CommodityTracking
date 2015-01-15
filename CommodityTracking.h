@@ -20,6 +20,17 @@ class FrameHistory {
 
 class Skeleton {
 public:
+	Skeleton() {
+		// initialize with an empty skeleton
+
+		center_of_rect = Point(0, 0);
+		rightMostAbove = Point(0, 0);
+		rightMostBelow = Point(0, 0);
+		leftMostAbove = Point(0, 0);
+		leftMostBelow = Point(0, 0);
+		topMost = Point(0, 0);
+	}
+
 	Point center_of_rect, rightMostAbove, rightMostBelow, leftMostAbove, leftMostBelow, topMost;
 
 	void visualize(Mat visualization) {
