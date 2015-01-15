@@ -122,12 +122,28 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previ
 
 	// assemble skeleton structure
 
-	final.center_of_rect = center_of_rect;
-	final.leftMostAbove = leftMostAbove;
-	final.leftMostBelow = leftMostBelow;
-	final.rightMostAbove = rightMostAbove;
-	final.rightMostBelow = rightMostBelow;
-	final.topMost = topMost;
+	// if there is a previous skeletal position that is out of range, reject it
+
+	int distanceConstant = 250;
+
+	if(!(previous.center_of_rect.x > 0 && norm(previous.center_of_rect - center_of_rect) > distanceConstant))
+		final.center_of_rect = center_of_rect;
+	
+	if(!(previous.leftMostAbove.x > 0 && norm(previous.leftMostAbove - leftMostAbove) > distanceConstant))
+			final.leftMostAbove = leftMostAbove;
+
+	if(!(previous.leftMostBelow.x > 0 && norm(previous.leftMostBelow - leftMostBelow) > distanceConstant))
+			final.leftMostBelow = leftMostBelow;
+
+	if(!(previous.rightMostAbove.x > 0 && norm(previous.rightMostAbove - rightMostAbove) > distanceConstant))
+			final.rightMostAbove = rightMostAbove;
+
+	if(!(previous.rightMostBelow.x > 0 && norm(previous.rightMostBelow - rightMostBelow) > distanceConstant))
+			final.rightMostBelow = rightMostBelow;
+
+	if(!(previous.topMost.x > 0 && norm(previous.topMost - topMost) > distanceConstant))
+			final.topMost = topMost;
+
 
 	history.append(frame);
 

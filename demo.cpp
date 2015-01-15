@@ -26,8 +26,6 @@ int main(int argc, char** argv) {
 	Skeleton lastSkeleton;
 
 	for(;;) {
-		Skeleton skeleton = getSkeleton(stream, history, lastSkeleton, _flip, minimumArclength, userSensitivity, limbGracePeriod);
-		
 		Mat visualization;
 
 		if(showOriginal) {
@@ -37,12 +35,15 @@ int main(int argc, char** argv) {
 		}
 		
 
-		skeleton.visualize(visualization);
+		lastSkeleton.visualize(visualization);
 		imshow("Visualization", visualization);
 
 		if(waitKey(1) == 27) {
 			break;
 		}
+
+		Skeleton skeleton = getSkeleton(stream, history, lastSkeleton, _flip, minimumArclength, userSensitivity, limbGracePeriod);
+		lastSkeleton = skeleton;
 	}
 
 	return 0;
