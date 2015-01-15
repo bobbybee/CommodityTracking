@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
-#include "CommodityTracking.h"
+#include <CommodityTracking.h>
 
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
