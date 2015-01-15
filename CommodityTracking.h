@@ -43,7 +43,7 @@ public:
 };
 
 Mat extractUserMask(Mat& delta, double sensitivity);
-Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod);
+Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton last, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod);
 void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod);
 
 #endif

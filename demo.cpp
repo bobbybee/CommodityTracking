@@ -23,9 +23,10 @@ int main(int argc, char** argv) {
 	createTrackbar("Show skeleton?", "Settings", &showSkeleton, 1);
 	createTrackbar("Flip?", "Settings", &_flip, 1);
 
+	Skeleton lastSkeleton;
 
 	for(;;) {
-		Skeleton skeleton = getSkeleton(stream, history, _flip, minimumArclength, userSensitivity, limbGracePeriod);
+		Skeleton skeleton = getSkeleton(stream, history, lastSkeleton, _flip, minimumArclength, userSensitivity, limbGracePeriod);
 		
 		Mat visualization;
 

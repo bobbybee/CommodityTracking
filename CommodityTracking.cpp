@@ -43,7 +43,7 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	return delta;
 }
 
-Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
+Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previous, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
 	Skeleton final;
 
 	// read frame from webcam; flip orientation to natural orientation
@@ -135,8 +135,10 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, bool _flip, in
 }
 
 void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod) {
+	Skeleton nullSkeleton;
+
 	while(*userSensitivity < 1000) {
-		Skeleton skeleton = getSkeleton(stream, history, false, minimumArclength, *userSensitivity, limbGracePeriod);
+		Skeleton skeleton = getSkeleton(stream, history, nullSkeleton, false, minimumArclength, *userSensitivity, limbGracePeriod);
 		
 		if(skeleton.rightMostAbove.x == 0) {
 			// optimal calibration found
