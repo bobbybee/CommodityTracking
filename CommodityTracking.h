@@ -48,6 +48,7 @@ public:
 	// utility methods for getting individual skeleton points
 	// returns a Point2d normalized to size of screen 
 
+	Point2d center() { return Point2d( (double) center_of_rect.x / fullWidth, (double) center_of_rect.y / fullHeight); }
 	Point2d rightHand() { return Point2d( (double) rightMostAbove.x / fullWidth, (double) rightMostAbove.y / fullHeight); }
 	Point2d leftHand() { return Point2d( (double) leftMostAbove.x / fullWidth, (double) leftMostAbove.y / fullHeight); }
 
