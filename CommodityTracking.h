@@ -29,9 +29,13 @@ public:
 		leftMostAbove = Point(0, 0);
 		leftMostBelow = Point(0, 0);
 		topMost = Point(0, 0);
+
+		fullWidth = 1; // prevent division by zero errors
+		fullHeight = 1;
 	}
 
 	Point center_of_rect, rightMostAbove, rightMostBelow, leftMostAbove, leftMostBelow, topMost;
+	int fullWidth, fullHeight;
 
 	void visualize(Mat visualization) {
 		line(visualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
@@ -40,6 +44,13 @@ public:
 		line(visualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 		line(visualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
 	}
+
+	// utility methods for getting individual skeleton points
+	// returns a Point2d normalized to size of screen 
+
+	Point2d rightHand() { return Point2d( (double) rightMostAbove.x / fullWidth, (double) rightMostAbove.y / fullHeight); }
+	Point2d leftHand() { return Point2d( (double) leftMostAbove.x / fullWidth, (double) leftMostAbove.y / fullHeight); }
+
 };
 
 Mat extractUserMask(Mat& delta, double sensitivity);

@@ -56,6 +56,9 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previ
 		stream.read(frame);
 	}
 
+	final.fullWidth = frame.cols;
+	final.fullHeight = frame.rows;
+
 	Mat delta = history.motion(frame);
 	delta = extractUserMask(delta, userSensitivity / 256);
 
