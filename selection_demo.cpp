@@ -18,11 +18,15 @@ int main(int argc, char** argv) {
 
 		Mat output = Mat::zeros(512, 512, CV_8UC3);
 
-		Point2d rightHand = skeleton.rightHand();
-		Point2d leftHand = skeleton.leftHand();
+		Point2d rightHand = skeleton.rightHand() * 512;
+		Point2d leftHand = skeleton.leftHand() * 512;
+		Point2d center = skeleton.center() * 512;
 
-		circle(output, Point(rightHand.x * 512, rightHand.y * 512), 15, Scalar(0, 0, 255), 20);
-		circle(output, Point(leftHand.x * 512, leftHand.y * 512), 15, Scalar(255, 0, 0), 20);
+		circle(output, rightHand, 15, Scalar(0, 0, 255), 20);
+		circle(output, leftHand, 15, Scalar(255, 0, 0), 20);
+		circle(output, center, 15, Scalar(0, 255, 0), 20);
+		line(output, center, rightHand, Scalar(255, 255, 255), 20);
+		line(output, center, leftHand, Scalar(255, 255, 255), 20);
 
 		imshow("Output", output);
 
