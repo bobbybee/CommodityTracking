@@ -2,19 +2,24 @@
 
 FrameHistory::FrameHistory(VideoCapture& stream) {
 	stream.read(m_lastFrame); // fixes a race condition in the first few frames
+	stream.read(m_threeFrame); // fixes a race condition in the first few frames
 	stream.read(m_twoFrame);
 }
 
 void FrameHistory::append(Mat frame) {
+	m_threeFrame = m_twoFrame;
 	m_twoFrame = m_lastFrame;
 	m_lastFrame = frame;
 }
 
 Mat FrameHistory::motion(Mat frame) {
-	Mat out1, out2, delta;
+	Mat out1, out2, out3, delta;
 	absdiff(m_twoFrame, frame, out1);
 	absdiff(m_lastFrame, frame, out2);
-	bitwise_and(out1, out2, delta);
+	absdiff(m_threeFrame, frame, out3);
+
+	bitwise_or(out2, out3, delta);
+	bitwise_or(delta, out1, delta);
 
 	return delta;
 }
@@ -30,13 +35,12 @@ Mat FrameHistory::getLastFrame() {
 Mat extractUserMask(Mat& delta, double sensitivity) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
+	blur(delta, delta, Size(2, 2), Point(-1, -1));
 	threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-
-	blur(delta, delta, Size(15, 15), Point(-1, -1));
+	blur(delta, delta, Size(2, 2), Point(-1, -1));
 	threshold(delta, delta, sensitivity * 15, 255, THRESH_BINARY);
-
-	blur(delta, delta, Size(35, 35), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 25, 255, THRESH_BINARY);
+	blur(delta, delta, Size(2, 2), Point(-1, -1));
+	threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -158,13 +162,14 @@ void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameH
 
 	while(*userSensitivity < 1000) {
 		Skeleton skeleton = getSkeleton(stream, history, nullSkeleton, false, minimumArclength, *userSensitivity, limbGracePeriod);
-		
-		if(skeleton.rightMostAbove.x == 0) {
-			// optimal calibration found
-			return;
-		}
 
 		*userSensitivity += interval;
+
+		if(skeleton.rightMostAbove.x == 0) {
+			// optimal calibration found
+			*userSensitivity += interval * 2;
+			return;
+		}
 	}
 
 	// if this point is reached, all hope is lost :(
