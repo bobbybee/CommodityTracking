@@ -39,47 +39,16 @@ int main(int argc, char** argv) {
 		Mat delta = history.motion(frame);
 		history.append(frame);
 
-
 		resize(delta, delta, Size(0, 0), 0.1, 0.1);
 		resize(frame, frame, Size(0, 0), 0.1, 0.1);
 		
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
-		Mat clippedFrame;
-		bitwise_and(frame, mask, clippedFrame);
-		mask = clippedFrame;
+		Mat user = simplifyUserMask(mask, frame, minimumArclength);
 
+		bitwise_and(frame, user, user);
+		resize(user, user, Size(0, 0), 10, 10);
+		imshow("User", user);
 
-		vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
-
-		cvtColor(mask, mask, CV_BGR2GRAY);
-
-		Mat edges;
-		Canny(mask, edges, 30, 30 * 3, 3);
-
-		Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
-
-		findContours(mask.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-			approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
-
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-				drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED);
-			}
-		}
-
-		//resize(contourOut, contourOut, Size(0, 0), 10, 10);
-		imshow("CONTOURS", contourOut);
-		bitwise_and(frame, contourOut, contourOut);
-		resize(contourOut, contourOut, Size(0, 0), 10, 10);
-		imshow("USER PICTURE", contourOut);
-
-		//resize(edges, edges, Size(0, 0), 10, 10);
-		//imshow("Edges", edges);
-
-		
 		/*
 		if(showOriginal) {
 			visualization = history.getLastFrame().clone();

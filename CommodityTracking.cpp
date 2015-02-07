@@ -47,6 +47,37 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	return delta;
 }
 
+// NOTE: may trash original mask. clone if preservation is needed
+Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
+	// bitwise AND the mask with the frame to yield a picture of the user
+	bitwise_and(frame, mask, mask);
+
+	// prepare for Canny + contour detection
+	cvtColor(mask, mask, CV_BGR2GRAY);
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+
+	// extract edges using Canny
+	Mat edges;
+	Canny(mask, edges, 30, 30 * 3, 3);
+
+	// find contours, simplify and draw large contours to contourOut
+	Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
+	findContours(mask.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+	for(int i = 0; i < contours.size(); ++i) {
+		double t_arcLength = arcLength(Mat(contours[i]), true);
+		approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
+
+		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED); // CV_FILLED produces filled contours to act as a mask
+		}
+	}
+
+	return contourOut;
+}
+
 Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previous, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
 	Skeleton final;
 
