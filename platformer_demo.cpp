@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 		imshow("Output", output);
 
 		Mat vis = history.getLastFrame().clone();
+		resize(vis, vis, Size(0, 0), 0.1, 0.1);
 		skeleton.visualize(vis);
 		imshow("Frame (+skeleton)", vis);
 

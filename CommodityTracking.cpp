@@ -95,16 +95,21 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previ
 	final.fullHeight = frame.rows;
 
 	Mat delta = history.motion(frame);
-	delta = extractUserMask(delta, userSensitivity / 256);
+	history.append(frame);
+	resize(delta, delta, Size(0, 0), 0.1, 0.1);
+	resize(frame, frame, Size(0, 0), 0.1, 0.1);
 
+	Mat mask = extractUserMask(delta, userSensitivity / 256);
+	delta = simplifyUserMask(mask, frame, minimumArclength);
 	Mat user;
+
 	bitwise_and(frame, delta, user);
 
 	// find contours in the user image after removing noise
 
-	cvtColor(user, user, CV_BGR2GRAY);
+	//cvtColor(user, user, CV_BGR2GRAY);
 
-	blur(user, user, Size(3, 3));
+	//blur(user, user, Size(3, 3));
 	Canny(user, delta, 50, 50 * 3, 3);
 
 	vector<vector<Point> > contours;
@@ -181,9 +186,6 @@ Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previ
 
 	if(!(previous.topMost.x > 0 && norm(previous.topMost - topMost) > distanceConstant))
 			final.topMost = topMost;
-
-
-	history.append(frame);
 
 	return final;
 }

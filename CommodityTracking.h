@@ -38,11 +38,11 @@ public:
 	int fullWidth, fullHeight;
 
 	void visualize(Mat visualization) {
-		line(visualization, topMost, center_of_rect, Scalar(0, 255, 0), 20);
-		line(visualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(visualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 20);
-		line(visualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
-		line(visualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 20);
+		line(visualization, topMost, center_of_rect, Scalar(0, 255, 0), 2);
+		line(visualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 2);
+		line(visualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 2);
+		line(visualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 2);
+		line(visualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 2);
 	}
 
 	// utility methods for getting individual skeleton points
