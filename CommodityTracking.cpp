@@ -36,11 +36,11 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 15, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
