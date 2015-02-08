@@ -60,7 +60,7 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 
 	// extract edges using Canny
 	Mat edges;
-	Canny(mask, edges, 30, 30 * 3, 3);
+	Canny(mask, edges, 300, 300 * 3, 3);
 
 	// find contours, simplify and draw large contours to contourOut
 	Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
@@ -71,7 +71,7 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 		approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
 
 		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED); // CV_FILLED produces filled contours to act as a mask
+			drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1); // CV_FILLED produces filled contours to act as a mask
 		}
 	}
 

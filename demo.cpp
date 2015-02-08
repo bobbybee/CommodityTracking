@@ -45,7 +45,6 @@ int main(int argc, char** argv) {
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
 		Mat user = simplifyUserMask(mask, frame, minimumArclength);
 
-		bitwise_and(frame, user, user);
 		resize(user, user, Size(0, 0), 10, 10);
 		imshow("User", user);
 
