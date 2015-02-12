@@ -71,7 +71,7 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 
 	for(int i = 0; i < contours.size(); ++i) {
 		double t_arcLength = arcLength(Mat(contours[i]), true);
-		approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
+		approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
 
 		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
