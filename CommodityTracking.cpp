@@ -36,11 +36,11 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 30, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -57,21 +57,24 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
+	blur(mask, mask, Size(2, 2), Point(-1, -1));
 
 	// extract edges using Canny
 	Mat edges;
-	Canny(mask, edges, 300, 300 * 3, 3);
+	Canny(mask, edges, 100, 100 * 3, 3);
+
+	cvtColor(edges, edges, CV_GRAY2BGR);
 
 	// find contours, simplify and draw large contours to contourOut
 	Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
-	findContours(mask.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
 	for(int i = 0; i < contours.size(); ++i) {
 		double t_arcLength = arcLength(Mat(contours[i]), true);
 		approxPolyDP(contours[i], contours[i], t_arcLength * 0.01, true);
 
 		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-			drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1); // CV_FILLED produces filled contours to act as a mask
+			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
 		}
 	}
 
