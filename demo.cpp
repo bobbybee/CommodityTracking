@@ -67,29 +67,10 @@ int main(int argc, char** argv) {
 
 		imshow("Visualization", visualization);
 
-		/*
-		if(showOriginal) {
-			visualization = history.getLastFrame().clone();
-		} else {
-			visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
-		}
-		
-
-		lastSkeleton.visualize(visualization); // use Skeleton::visualize for the demo
-												// in a real app, we would access properties such as
-												// skeleton.leftMostAbove (left hand position)
-		imshow("Visualization", visualization);
-*/
 		if(waitKey(1) == 27) {
 			break;
 		}
-
-		// get the Skeleton object
-		// takes VideoStream, FrameHistory, Skeleton lastSkeleton,
-		// whether to flip the frame, and some sensitivity settings
-
-		//Skeleton skeleton = getSkeleton(stream, history, lastSkeleton, false, minimumArclength, userSensitivity, limbGracePeriod);
-		//lastSkeleton = skeleton;
 	}
+	
 	return 0;
 }
