@@ -49,19 +49,17 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 
 // NOTE: may trash original mask. clone if preservation is needed
 Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
-	// bitwise AND the mask with the frame to yield a picture of the user
-	bitwise_and(frame, mask, mask);
-
 	// prepare for Canny + contour detection
 	cvtColor(mask, mask, CV_BGR2GRAY);
 
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-	blur(mask, mask, Size(2, 2), Point(-1, -1));
+	blur(mask, mask, Size(14, 14), Point(-1, -1));
+	threshold(mask, mask, 100, 255, THRESH_BINARY);
 
 	// extract edges using Canny
 	Mat edges;
-	Canny(mask, edges, 100, 100 * 3, 3);
+	Canny(mask, edges, 10, 10 * 3, 3);
 
 	cvtColor(edges, edges, CV_GRAY2BGR);
 

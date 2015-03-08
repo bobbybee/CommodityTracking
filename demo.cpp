@@ -12,9 +12,10 @@ int main(int argc, char** argv) {
 
 	// automatically calibrate userSensitivity
 
-	int minimumArclength = 30;
+	int minimumArclength = 150;
 	int userSensitivity = 255;
 	int limbGracePeriod = 50;
+	int minimumEdgeSpacing = 300;
 
 	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1, limbGracePeriod);
 
@@ -54,8 +55,6 @@ int main(int argc, char** argv) {
 		Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
 		findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-		int averageX = 0, averageY = 0, n = 0;
-		Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
 
 		for(int i = 0; i < contours.size(); ++i) {
 			double t_arcLength = arcLength(Mat(contours[i]), true);
@@ -64,6 +63,10 @@ int main(int argc, char** argv) {
 			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 				drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
 			
+				int averageX = 0, averageY = 0, n = 0;
+				Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
+				vector<Point> edgePoints;
+
 				for(int j = 0; j < contours[i].size(); ++j) {
 					++n;
 					averageX += contours[i][j].x;
@@ -79,33 +82,36 @@ int main(int argc, char** argv) {
 					if(contours[i][j].y > bottomRight.y)
 						bottomRight.y = contours[i][j].y;
 				}
-			}
-		}
 
-		vector<Point> edgePoints;
-
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-			//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
-
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 				for(int j = 0; j < contours[i].size(); ++j) {
 					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
-						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3))
-						edgePoints.push_back(contours[i][j]);
+						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
+						
+						// potentially an edge point
+						// however, we would like to simplify a bit
+						// if this point is too close to the last point, don't throw it on the map
+						
+						if(edgePoints.size() > 0) {
+							Point lastEdgePoint = edgePoints[edgePoints.size() - 1];
+							if( (((lastEdgePoint.x - contours[i][j].x) * (lastEdgePoint.x - contours[i][j].x))
+								+ ((lastEdgePoint.y - contours[i][j].y) * (lastEdgePoint.y - contours[i][j].y))) > minimumEdgeSpacing)
+									edgePoints.push_back(contours[i][j]);
+						} else {
+							edgePoints.push_back(contours[i][j]);
+						}
+					}
 				}
-			}
-		}
 
-		if(n > 0) {
-			averageX /= n;
-			averageY /= n;
+				averageX /= n;
+				averageY /= n;
 
-			rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
-			rectangle(contourOut, topLeft, bottomRight, Scalar(0, 0, 255), 5);
+				rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
+				//rectangle(contourOut, topLeft, bottomRight, Scalar(0, 0, 255), 5);
 
-			for(int i = 0; i < edgePoints.size(); ++i) {
-				rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+				for(int i = 0; i < edgePoints.size(); ++i) {
+					rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+				}
+
 			}
 		}
 
