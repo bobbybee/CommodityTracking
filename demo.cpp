@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 
 	// automatically calibrate userSensitivity
 
-	int minimumArclength = 150;
+	int minimumArclength = 180;
 	int userSensitivity = 255;
 	int limbGracePeriod = 50;
 	int minimumEdgeSpacing = 300;
@@ -37,6 +37,8 @@ int main(int argc, char** argv) {
 		stream.read(flipped_frame);
 		flip(flipped_frame, frame, 1);
 
+		visualization = frame.clone();
+
 		Mat delta = history.motion(frame);
 		history.append(frame);
 
@@ -50,10 +52,20 @@ int main(int argc, char** argv) {
 		std::vector<std::vector<Point> > edgePointsList;
 		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, minimumEdgeSpacing, true, edgePointsList);
 
-		//user = contourOut;
+		// do some visualization
 
-		//resize(user, user, Size(0, 0), 10, 10);
-		//imshow("User", user);
+		// each center is a different skeleton / blob
+		for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
+			// draw limbs
+			for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
+				line(visualization, centers[skeleton] * 10, edgePointsList[skeleton][limb] * 10, Scalar(0, 255, 0), 10);
+			}
+
+			// draw the tracking dot
+			rectangle(visualization, centers[skeleton] * 10, centers[skeleton] * 10, Scalar(0, 0, 255), 50);
+		}
+
+		imshow("Visualization", visualization);
 
 		/*
 		if(showOriginal) {
