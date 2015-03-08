@@ -79,6 +79,94 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 	return contourOut;
 }
 
+std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, int minimumEdgeSpacing, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
+	Mat edges;
+	Canny(simplifiedUserMask, edges, 100, 100 * 3, 3);
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+
+	Mat contourOut;
+
+	if(draw)
+		contourOut = Mat::zeros(frame.size(), CV_8UC3);
+	
+	findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+
+	vector<Point> centers;
+
+	for(int i = 0; i < contours.size(); ++i) {
+		double t_arcLength = arcLength(Mat(contours[i]), true);
+		//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
+
+		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+			if(draw)
+				drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+		
+			int averageX = 0, averageY = 0, n = 0;
+			Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
+			vector<Point> edgePoints;
+
+			for(int j = 0; j < contours[i].size(); ++j) {
+				++n;
+				averageX += contours[i][j].x;
+				averageY += contours[i][j].y;
+
+				if(contours[i][j].x < topLeft.x)
+					topLeft.x = contours[i][j].x;
+				if(contours[i][j].y < topLeft.y )
+					topLeft.y = contours[i][j].y;
+
+				if(contours[i][j].x > bottomRight.x)
+					bottomRight.x = contours[i][j].x;
+				if(contours[i][j].y > bottomRight.y)
+					bottomRight.y = contours[i][j].y;
+			}
+
+			for(int j = 0; j < contours[i].size(); ++j) {
+				if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
+					(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
+					
+					// potentially an edge point
+					// however, we would like to simplify a bit
+					// if this point is too close to the last point, don't throw it on the map
+
+					if(edgePoints.size() > 0) {
+						Point lastEdgePoint = edgePoints[edgePoints.size() - 1];
+						if( (((lastEdgePoint.x - contours[i][j].x) * (lastEdgePoint.x - contours[i][j].x))
+							+ ((lastEdgePoint.y - contours[i][j].y) * (lastEdgePoint.y - contours[i][j].y))) > minimumEdgeSpacing)
+								edgePoints.push_back(contours[i][j]);
+					} else {
+						edgePoints.push_back(contours[i][j]);
+					}
+				}
+			}
+
+			averageX /= n;
+			averageY /= n;
+
+			centers.push_back(Point(averageX, averageY));
+
+			if(draw)
+				rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
+
+			if(draw) {
+				for(int i = 0; i < edgePoints.size(); ++i) {
+					rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+				}
+			}
+
+			edgePointsList.push_back(edgePoints);
+
+		}
+	}
+
+	if(draw)
+		imshow("Edge Point Sketch", contourOut);
+
+	return centers;
+}
+
 Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previous, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
 	Skeleton final;
 

@@ -44,81 +44,16 @@ int main(int argc, char** argv) {
 		resize(frame, frame, Size(0, 0), 0.1, 0.1);
 		
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
-		Mat user = simplifyUserMask(mask, frame, minimumArclength);
+		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-		Mat edges;
-		Canny(user, edges, 100, 100 * 3, 3);
+		std::vector<Point> centers;
+		std::vector<std::vector<Point> > edgePointsList;
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, minimumEdgeSpacing, true, edgePointsList);
 
-		vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
+		//user = contourOut;
 
-		Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
-		findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-
-
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-			//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
-
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-				drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
-			
-				int averageX = 0, averageY = 0, n = 0;
-				Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
-				vector<Point> edgePoints;
-
-				for(int j = 0; j < contours[i].size(); ++j) {
-					++n;
-					averageX += contours[i][j].x;
-					averageY += contours[i][j].y;
-
-					if(contours[i][j].x < topLeft.x)
-						topLeft.x = contours[i][j].x;
-					if(contours[i][j].y < topLeft.y )
-						topLeft.y = contours[i][j].y;
-
-					if(contours[i][j].x > bottomRight.x)
-						bottomRight.x = contours[i][j].x;
-					if(contours[i][j].y > bottomRight.y)
-						bottomRight.y = contours[i][j].y;
-				}
-
-				for(int j = 0; j < contours[i].size(); ++j) {
-					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
-						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
-						
-						// potentially an edge point
-						// however, we would like to simplify a bit
-						// if this point is too close to the last point, don't throw it on the map
-						
-						if(edgePoints.size() > 0) {
-							Point lastEdgePoint = edgePoints[edgePoints.size() - 1];
-							if( (((lastEdgePoint.x - contours[i][j].x) * (lastEdgePoint.x - contours[i][j].x))
-								+ ((lastEdgePoint.y - contours[i][j].y) * (lastEdgePoint.y - contours[i][j].y))) > minimumEdgeSpacing)
-									edgePoints.push_back(contours[i][j]);
-						} else {
-							edgePoints.push_back(contours[i][j]);
-						}
-					}
-				}
-
-				averageX /= n;
-				averageY /= n;
-
-				rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
-				//rectangle(contourOut, topLeft, bottomRight, Scalar(0, 0, 255), 5);
-
-				for(int i = 0; i < edgePoints.size(); ++i) {
-					rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
-				}
-
-			}
-		}
-
-		user = contourOut;
-
-		resize(user, user, Size(0, 0), 10, 10);
-		imshow("User", user);
+		//resize(user, user, Size(0, 0), 10, 10);
+		//imshow("User", user);
 
 		/*
 		if(showOriginal) {
