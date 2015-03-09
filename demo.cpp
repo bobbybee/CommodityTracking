@@ -12,10 +12,10 @@ int main(int argc, char** argv) {
 
 	// automatically calibrate userSensitivity
 
-	int minimumArclength = 180;
+	int minimumArclength = 200;
 	int userSensitivity = 255;
 	int limbGracePeriod = 50;
-	int minimumEdgeSpacing = 300;
+	int minimumEdgeSpacing = 500;
 
 	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1, limbGracePeriod);
 
@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
 		flip(flipped_frame, frame, 1);
 
 		visualization = frame.clone();
+		//visualization = Mat::zeros(frame.size(), CV_8UC3);
 
 		Mat delta = history.motion(frame);
 		history.append(frame);
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, minimumEdgeSpacing, true, edgePointsList);
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, minimumEdgeSpacing, false, edgePointsList);
 
 		// do some visualization
 
@@ -58,11 +59,35 @@ int main(int argc, char** argv) {
 		for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
 			// draw limbs
 			for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
-				line(visualization, centers[skeleton] * 10, edgePointsList[skeleton][limb] * 10, Scalar(0, 255, 0), 10);
+				//line(visualization, centers[skeleton] * 10, edgePointsList[skeleton][limb] * 10, Scalar(0, 255, 0), 10);
+			
+				if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+					rectangle(visualization, edgePointsList[skeleton][limb] * 10, edgePointsList[skeleton][limb] * 10, Scalar(0, 255, 0), 50);
+				
+					int leg = 0; // 0 for left, 1 for right
+
+					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+						leg = 1;
+					}
+
+					putText(visualization, leg == 0 ? "L" : "R", edgePointsList[skeleton][limb] * 10, FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255));
+				} else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
+					rectangle(visualization, edgePointsList[skeleton][limb] * 10, edgePointsList[skeleton][limb] * 10, Scalar(255, 0, 0), 50);
+					
+					int hand = 0; // 0 for left, 1 for right
+
+					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+						hand = 1;
+					}
+
+					putText(visualization, hand == 0 ? "L" : "R", edgePointsList[skeleton][limb] * 10, FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255));
+				} else {
+					rectangle(visualization, edgePointsList[skeleton][limb] * 10, edgePointsList[skeleton][limb] * 10, Scalar(0, 0, 255), 50);
+				}
 			}
 
 			// draw the tracking dot
-			rectangle(visualization, centers[skeleton] * 10, centers[skeleton] * 10, Scalar(0, 0, 255), 50);
+			rectangle(visualization, centers[skeleton] * 10, centers[skeleton] * 10, Scalar(255, 255, 0), 50);
 		}
 
 		imshow("Visualization", visualization);
@@ -71,6 +96,6 @@ int main(int argc, char** argv) {
 			break;
 		}
 	}
-	
+
 	return 0;
 }

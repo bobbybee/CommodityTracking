@@ -36,11 +36,11 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	cvtColor(delta, delta, CV_BGR2GRAY);
 
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 14, 255, THRESH_BINARY);
+	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -55,7 +55,7 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	blur(mask, mask, Size(14, 14), Point(-1, -1));
-	threshold(mask, mask, 100, 255, THRESH_BINARY);
+	threshold(mask, mask, 30, 255, THRESH_BINARY);
 
 	// extract edges using Canny
 	Mat edges;
@@ -77,6 +77,24 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 	}
 
 	return contourOut;
+}
+
+// Point p is an edge point, but it is not necessarily unique
+// there may be an existing Point near p
+// if this point is too close to any other point, we do not push it to edgePoints
+
+static inline void pushUniquePoint(std::vector<Point>& edgePoints, Point p, int minimumEdgeSpacing) {
+	for(int z = 0; z < edgePoints.size(); ++z) {
+		if( 
+			( // compute distance between each edge point and this point
+					((edgePoints[z].x - p.x) * (edgePoints[z].x - p.x))
+				+ 	((edgePoints[z].y - p.y) * (edgePoints[z].y - p.y))
+			)
+			 < minimumEdgeSpacing) // if it falls within the restricted zone, it is not a unique point
+				return;
+	}
+
+	edgePoints.push_back(p);
 }
 
 std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, int minimumEdgeSpacing, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
@@ -126,19 +144,8 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 			for(int j = 0; j < contours[i].size(); ++j) {
 				if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
 					(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
-					
-					// potentially an edge point
-					// however, we would like to simplify a bit
-					// if this point is too close to the last point, don't throw it on the map
-
-					if(edgePoints.size() > 0) {
-						Point lastEdgePoint = edgePoints[edgePoints.size() - 1];
-						if( (((lastEdgePoint.x - contours[i][j].x) * (lastEdgePoint.x - contours[i][j].x))
-							+ ((lastEdgePoint.y - contours[i][j].y) * (lastEdgePoint.y - contours[i][j].y))) > minimumEdgeSpacing)
-								edgePoints.push_back(contours[i][j]);
-					} else {
-						edgePoints.push_back(contours[i][j]);
-					}
+				
+					pushUniquePoint(edgePoints, contours[i][j], minimumEdgeSpacing);
 				}
 			}
 
@@ -161,8 +168,10 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 		}
 	}
 
-	if(draw)
+	if(draw) {
+		resize(contourOut, contourOut, Size(0, 0), 10, 10);
 		imshow("Edge Point Sketch", contourOut);
+	}
 
 	return centers;
 }
