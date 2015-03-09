@@ -20,45 +20,52 @@ class FrameHistory {
 
 class Skeleton {
 public:
-	Skeleton() {
-		// initialize with an empty skeleton
+	Skeleton(Point leftHand, Point rightHand, Point leftLeg, Point rightLeg, Point center, int width, int height) {
+		m_width = width;
+		m_height = height;
 
-		center_of_rect = Point(0, 0);
-		rightMostAbove = Point(0, 0);
-		rightMostBelow = Point(0, 0);
-		leftMostAbove = Point(0, 0);
-		leftMostBelow = Point(0, 0);
-		topMost = Point(0, 0);
+		m_leftHand = normalize(leftHand);
+		m_rightHand = normalize(rightHand);
+		m_leftLeg = normalize(leftLeg);
+		m_rightLeg = normalize(rightLeg);
+		m_center = normalize(center);
 
-		fullWidth = 1; // prevent division by zero errors
-		fullHeight = 1;
+		// initialize magnification to prevent confusing problems
+		m_magWidth = 1;
+		m_magHeight = 1;
 	}
 
-	Point center_of_rect, rightMostAbove, rightMostBelow, leftMostAbove, leftMostBelow, topMost;
-	int fullWidth, fullHeight;
-
-	void visualize(Mat visualization) {
-		line(visualization, topMost, center_of_rect, Scalar(0, 255, 0), 2);
-		line(visualization, rightMostAbove, center_of_rect, Scalar(0, 255, 0), 2);
-		line(visualization, leftMostAbove, center_of_rect, Scalar(0, 255, 0), 2);
-		line(visualization, rightMostBelow, center_of_rect, Scalar(0, 255, 0), 2);
-		line(visualization, leftMostBelow, center_of_rect, Scalar(0, 255, 0), 2);
+	Point2d normalize(Point2d p) {
+		return Point2d( (double) p.x / m_width, (double) p.y / m_height);
 	}
 
-	// utility methods for getting individual skeleton points
-	// returns a Point2d normalized to size of screen 
+	void setMagnification(Mat m) {
+		m_magWidth = m.cols;
+		m_magHeight = m.rows;
+	}
 
-	Point2d center() { return Point2d( (double) center_of_rect.x / fullWidth, (double) center_of_rect.y / fullHeight); }
-	Point2d head() { return Point2d( (double) topMost.x / fullWidth, (double) topMost.y / fullHeight); }
-	Point2d rightHand() { return Point2d( (double) rightMostAbove.x / fullWidth, (double) rightMostAbove.y / fullHeight); }
-	Point2d leftHand() { return Point2d( (double) leftMostAbove.x / fullWidth, (double) leftMostAbove.y / fullHeight); }
+	Point2d magnify(Point2d p) {
+		return Point2d(p.x * m_magWidth, p.y * m_magHeight);
+	}
+
+	// define helper utilities for accessing skeleton
+	Point2d leftHand() { return magnify(m_leftHand); };
+	Point2d rightHand() { return magnify(m_rightHand); };
+	Point2d leftLeg() { return magnify(m_leftLeg); };
+	Point2d rightLeg() { return magnify(m_rightLeg); };
+	Point2d center() { return magnify(m_center); };
+
+	// member properties
+	Point2d m_leftHand, m_rightHand, m_leftLeg, m_rightLeg, m_center;
+	int m_width, m_height;
+	int m_magWidth, m_magHeight;
 
 };
 
 Mat extractUserMask(Mat& delta, double sensitivity);
 Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength);
 std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList);
-Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton last, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod);
-void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod);
+std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height);
+void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval);
 
 #endif

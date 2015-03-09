@@ -4,7 +4,8 @@
 #include <CommodityTracking.h>
 
 int main(int argc, char** argv) {
-	VideoCapture stream(0);
+	std::cout << "The platformer demo has been temporarily disabled while the Skeleton object is reworked" << endl;
+	/*VideoCapture stream(0);
 	FrameHistory history(stream);
 
 	int minimumArclength = 150, userSensitivity = 255, limbGracePeriod = 50;
@@ -41,5 +42,5 @@ int main(int argc, char** argv) {
 			break;
 		}
 
-	}
+	}*/
 }

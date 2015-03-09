@@ -158,128 +158,101 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 	return centers;
 }
 
-Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton previous, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod) {
-	Skeleton final;
+// computes the mean of a vector of Point's
 
-	// read frame from webcam; flip orientation to natural orientation
-	Mat flipped_frame, frame;
-	
-	if(_flip) {
-		stream.read(flipped_frame);
-		flip(flipped_frame, frame, 1);
+static Point averagePoints(std::vector<Point> points) {
+	if(points.size()) {
+		int sumX = 0, sumY = 0;
+
+		for(int i = 0; i < points.size(); ++i) {
+			sumX += points[i].x;
+			sumY += points[i].y;
+		}
+
+		return Point(sumX / points.size(), sumY / points.size());
 	} else {
-		stream.read(frame);
+		return Point(0, 0);
 	}
-
-	final.fullWidth = frame.cols;
-	final.fullHeight = frame.rows;
-
-	Mat delta = history.motion(frame);
-	history.append(frame);
-	resize(delta, delta, Size(0, 0), 0.1, 0.1);
-	resize(frame, frame, Size(0, 0), 0.1, 0.1);
-
-	Mat mask = extractUserMask(delta, userSensitivity / 256);
-	delta = simplifyUserMask(mask, frame, minimumArclength);
-	Mat user;
-
-	bitwise_and(frame, delta, user);
-
-	// find contours in the user image after removing noise
-
-	//cvtColor(user, user, CV_BGR2GRAY);
-
-	//blur(user, user, Size(3, 3));
-	Canny(user, delta, 50, 50 * 3, 3);
-
-	vector<vector<Point> > contours;
-	vector<Vec4i> hierarchy;
-	vector<Point> approxShape;
-	vector<int> largeContours;
-
-	findContours(delta.clone(), contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-	Point topMost(frame.cols, frame.rows),
-		  bottomMost(0, 0),
-		  leftMost(frame.cols, frame.rows),
-		  rightMost(0, 0);
-
-	for(int i = 0; i < contours.size(); ++i) {
-		double t_arcLength = arcLength(Mat(contours[i]), true);
-
-		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-			largeContours.push_back(i);
-
-			approxPolyDP(contours[i], contours[i], t_arcLength * 0.02, true);
-			
-			for(int j = 0; j < contours[i].size(); ++j) {
-				if(contours[i][j].y < topMost.y) topMost = contours[i][j];
-				if(contours[i][j].y > bottomMost.y) bottomMost = contours[i][j];
-				if(contours[i][j].x < leftMost.x) leftMost = contours[i][j];
-				if(contours[i][j].x > rightMost.x) rightMost = contours[i][j];
-			}
-
-			// drawContours(contourVisualization, contours, i, Scalar(255, 255, 255), 10);
-		}
-	}
-
-	Point center_of_rect((leftMost.x + rightMost.x) / 2, (topMost.y + bottomMost.y) / 2);
-
-	// find outer limb positions
-	Point leftMostAbove(frame.cols, frame.rows), rightMostAbove(0, 0),
-		  leftMostBelow(frame.cols, frame.rows), rightMostBelow(0, 0);
-
-	for(int i = 0; i < largeContours.size(); ++i) {
-		vector<Point> contour = contours[largeContours[i]];
-			
-		for(int j = 0; j < contour.size(); ++j) {
-			if( (contour[j].y - center_of_rect.y ) > limbGracePeriod) { // below
-				if(contour[j].x < leftMostBelow.x) leftMostBelow = contour[j];
-				if(contour[j].x > rightMostBelow.x) rightMostBelow = contour[j];
-			} else if( (center_of_rect.y - contour[j].y) > limbGracePeriod) { // above
-				if(contour[j].x < leftMostAbove.x) leftMostAbove = contour[j];
-				if(contour[j].x > rightMostAbove.x) rightMostAbove = contour[j];
-			}
-		}
-	}
-
-	// assemble skeleton structure
-
-	// if there is a previous skeletal position that is out of range, reject it
-
-	int distanceConstant = 250;
-
-	if(!(previous.center_of_rect.x > 0 && norm(previous.center_of_rect - center_of_rect) > distanceConstant))
-		final.center_of_rect = center_of_rect;
-	
-	if(!(previous.leftMostAbove.x > 0 && norm(previous.leftMostAbove - leftMostAbove) > distanceConstant))
-			final.leftMostAbove = leftMostAbove;
-
-	if(!(previous.leftMostBelow.x > 0 && norm(previous.leftMostBelow - leftMostBelow) > distanceConstant))
-			final.leftMostBelow = leftMostBelow;
-
-	if(!(previous.rightMostAbove.x > 0 && norm(previous.rightMostAbove - rightMostAbove) > distanceConstant))
-			final.rightMostAbove = rightMostAbove;
-
-	if(!(previous.rightMostBelow.x > 0 && norm(previous.rightMostBelow - rightMostBelow) > distanceConstant))
-			final.rightMostBelow = rightMostBelow;
-
-	if(!(previous.topMost.x > 0 && norm(previous.topMost - topMost) > distanceConstant))
-			final.topMost = topMost;
-
-	return final;
 }
 
-void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod) {
-	Skeleton nullSkeleton;
+std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height) {
+	vector<Skeleton*> skeletons;
+
+	// each center corresponds to a skeleton { mostly }
+	for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
+		// vector, as duplicate points *will* be found
+		vector<Point> leftHands, rightHands, leftLegs, rightLegs, unclassifieds;
+
+		// iterate through the list of points (limbs, typically)
+		for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
+			// classify based on position relative to center
+
+			// legs are far below the center: delta Y > threshold
+			if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+				// determine which leg is whcih by relative X and push to the respective vector
+				
+				if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+					rightLegs.push_back(edgePointsList[skeleton][limb]);
+				} else {
+					leftLegs.push_back(edgePointsList[skeleton][limb]);
+				}
+			}
+
+			// hands are far to the left or right of the center: abs(delta X) > threshold
+			else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
+				if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+					rightHands.push_back(edgePointsList[skeleton][limb]);
+				} else {
+					leftHands.push_back(edgePointsList[skeleton][limb]);
+				}
+			} 
+
+			// CommodityTracking doesn't understand other body parts,
+			// but it will save their points in case the application does
+			else {
+				unclassifieds.push_back(edgePointsList[skeleton][limb]);
+			}
+		}
+
+		// since we have vectors filled with duplicate points,
+		// we will average them together to find the true limb position
+
+		Point rightHand = averagePoints(rightHands), leftHand = averagePoints(leftHands),
+			  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs);
+
+		// populate the skeleton object
+		skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], width, height));
+	}
+
+	return skeletons;
+}
+
+// auto-calibration works by running a trivial part of the actual code;
+// it's main body is derived from the demo itself
+// however, it is constantly changing its sensitivity parameter
+// in order to minimize noise without compromising flexibility
+
+void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval) {
+	FrameHistory history(stream);
 
 	while(*userSensitivity < 1000) {
-		Skeleton skeleton = getSkeleton(stream, history, nullSkeleton, false, minimumArclength, *userSensitivity, limbGracePeriod);
+		Mat frame;
+		stream.read(frame);
+		
+		Mat delta = history.motion(frame);
+		history.append(frame);
+
+		Mat mask = extractUserMask(delta, *userSensitivity / 256);
+		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
 		*userSensitivity += interval;
 
-		if(skeleton.rightMostAbove.x == 0) {
-			// optimal calibration found
+		cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
+		
+		if(countNonZero(simplifiedUserMask) == 0) {
+			// optimal calibration found, but make it a bit more sensitive than needed
+			// noise fluctuates massively, after all
+
 			*userSensitivity += interval * 2;
 			return;
 		}
