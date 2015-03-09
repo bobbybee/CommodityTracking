@@ -30,7 +30,6 @@ int main(int argc, char** argv) {
 	int minimumArclength = 200;
 	int userSensitivity = 255;
 	int limbGracePeriod = 50;
-	int minimumEdgeSpacing = 500;
 
 	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1, limbGracePeriod);
 
@@ -66,7 +65,7 @@ int main(int argc, char** argv) {
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, minimumEdgeSpacing, false, edgePointsList);
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, false, edgePointsList);
 
 		// do some visualization
 

@@ -57,7 +57,7 @@ public:
 
 Mat extractUserMask(Mat& delta, double sensitivity);
 Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength);
-std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, int minimumEdgeSpacing, bool draw, std::vector<std::vector<Point> >& edgePointsList);
+std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList);
 Skeleton getSkeleton(VideoCapture& stream, FrameHistory& history, Skeleton last, bool _flip, int minimumArclength, int userSensitivity, int limbGracePeriod);
 void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, FrameHistory& history, int minimumArclength, int interval, int limbGracePeriod);
 

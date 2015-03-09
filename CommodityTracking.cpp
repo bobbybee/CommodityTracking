@@ -79,25 +79,7 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 	return contourOut;
 }
 
-// Point p is an edge point, but it is not necessarily unique
-// there may be an existing Point near p
-// if this point is too close to any other point, we do not push it to edgePoints
-
-static inline void pushUniquePoint(std::vector<Point>& edgePoints, Point p, int minimumEdgeSpacing) {
-	for(int z = 0; z < edgePoints.size(); ++z) {
-		if( 
-			( // compute distance between each edge point and this point
-					((edgePoints[z].x - p.x) * (edgePoints[z].x - p.x))
-				+ 	((edgePoints[z].y - p.y) * (edgePoints[z].y - p.y))
-			)
-			 < minimumEdgeSpacing) // if it falls within the restricted zone, it is not a unique point
-				return;
-	}
-
-	edgePoints.push_back(p);
-}
-
-std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, int minimumEdgeSpacing, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
+std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
 	Mat edges;
 	Canny(simplifiedUserMask, edges, 100, 100 * 3, 3);
 
@@ -145,7 +127,7 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 				if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
 					(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
 				
-					pushUniquePoint(edgePoints, contours[i][j], minimumEdgeSpacing);
+					edgePoints.push_back(contours[i][j]);
 				}
 			}
 
