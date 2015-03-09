@@ -181,14 +181,19 @@ std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::
 	// each center corresponds to a skeleton { mostly }
 	for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
 		// vector, as duplicate points *will* be found
-		vector<Point> leftHands, rightHands, leftLegs, rightLegs, unclassifieds;
+		vector<Point> leftHands, rightHands, leftLegs, rightLegs, heads, unclassifieds;
 
 		// iterate through the list of points (limbs, typically)
 		for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
 			// classify based on position relative to center
 
+			// heads are far above the center: delta Y > threshold
+			if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15) {
+				heads.push_back(edgePointsList[skeleton][limb]);
+			}
+
 			// legs are far below the center: delta Y > threshold
-			if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+			else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
 				// determine which leg is whcih by relative X and push to the respective vector
 				
 				if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
@@ -218,10 +223,11 @@ std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::
 		// we will average them together to find the true limb position
 
 		Point rightHand = averagePoints(rightHands), leftHand = averagePoints(leftHands),
-			  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs);
+			  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
+			  head = averagePoints(heads);
 
 		// populate the skeleton object
-		skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], width, height));
+		skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height));
 	}
 
 	return skeletons;
@@ -248,7 +254,7 @@ void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int mi
 		*userSensitivity += interval;
 
 		cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
-		
+
 		if(countNonZero(simplifiedUserMask) == 0) {
 			// optimal calibration found, but make it a bit more sensitive than needed
 			// noise fluctuates massively, after all

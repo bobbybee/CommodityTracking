@@ -20,7 +20,7 @@ class FrameHistory {
 
 class Skeleton {
 public:
-	Skeleton(Point leftHand, Point rightHand, Point leftLeg, Point rightLeg, Point center, int width, int height) {
+	Skeleton(Point leftHand, Point rightHand, Point leftLeg, Point rightLeg, Point center, Point head, int width, int height) {
 		m_width = width;
 		m_height = height;
 
@@ -29,6 +29,7 @@ public:
 		m_leftLeg = normalize(leftLeg);
 		m_rightLeg = normalize(rightLeg);
 		m_center = normalize(center);
+		m_head = normalize(head);
 
 		// initialize magnification to prevent confusing problems
 		m_magWidth = 1;
@@ -54,9 +55,10 @@ public:
 	Point2d leftLeg() { return magnify(m_leftLeg); };
 	Point2d rightLeg() { return magnify(m_rightLeg); };
 	Point2d center() { return magnify(m_center); };
+	Point2d head() { return magnify(m_head); };
 
 	// member properties
-	Point2d m_leftHand, m_rightHand, m_leftLeg, m_rightLeg, m_center;
+	Point2d m_leftHand, m_rightHand, m_leftLeg, m_rightLeg, m_center, m_head;
 	int m_width, m_height;
 	int m_magWidth, m_magHeight;
 

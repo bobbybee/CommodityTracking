@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 		vector<Skeleton*> skeletons = skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
 
 		// visualize skeletons
-		
+
 		int visWidth = visualization.cols, visHeight = visualization.rows;
 
 		for(int skeletonIndex = 0; skeletonIndex < skeletons.size(); ++skeletonIndex) {
@@ -64,8 +64,11 @@ int main(int argc, char** argv) {
 			rectangle(visualization, skeleton->rightLeg(), skeleton->rightLeg(), Scalar(0, 255, 0), 50);
 			putText(visualization, "R", skeleton->rightLeg(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0));
 
-			// draw t
+			// draw center
 			rectangle(visualization, skeleton->center(), skeleton->center(), Scalar(255, 255, 0), 50);
+
+			// draw head
+			rectangle(visualization, skeleton->head(), skeleton->head(), Scalar(255, 0, 255), 100);
 		}
 
 		imshow("Visualization", visualization);

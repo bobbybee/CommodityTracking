@@ -5,31 +5,59 @@
 
 int main(int argc, char** argv) {
 	std::cout << "The platformer demo has been temporarily disabled while the Skeleton object is reworked" << endl;
-	/*VideoCapture stream(0);
+	/*
+	VideoCapture stream(0);
 	FrameHistory history(stream);
 
-	int minimumArclength = 150, userSensitivity = 255, limbGracePeriod = 50;
-	autoCalibrateSensitivity(&userSensitivity, stream, history, minimumArclength, 1, limbGracePeriod);
+	int minimumArclength = 200;
+	int userSensitivity = 255;
 
-	Skeleton lastSkeleton;
+	autoCalibrateSensitivity(&userSensitivity, stream, minimumArclength, 1);
 
 	Mat cvMan = imread("cvman.png");
 
 	for(;;) {
-		Skeleton skeleton = getSkeleton(stream, history, lastSkeleton, true, minimumArclength, userSensitivity, limbGracePeriod);
-		lastSkeleton = skeleton;
+		Mat visualization; // initialize a backdrop for the skeleton
+		Mat frame, flipped_frame;
+
+		stream.read(flipped_frame);
+		flip(flipped_frame, frame, 1);
+
+		visualization = frame.clone();
+		//visualization = Mat::zeros(frame.size(), CV_8UC3);
+
+		Mat delta = history.motion(frame);
+		history.append(frame);
+
+		resize(delta, delta, Size(0, 0), 0.1, 0.1);
+		resize(frame, frame, Size(0, 0), 0.1, 0.1);
+		
+		Mat mask = extractUserMask(delta, userSensitivity / 256);
+		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+
+		std::vector<Point> centers;
+		std::vector<std::vector<Point> > edgePointsList;
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, false, edgePointsList);
+
+		vector<Skeleton*> skeletons = skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
 
 		Mat output = Mat::ones(512, 512, CV_8UC3);
 		output = Scalar(255, 255, 255);
 
-		Point2d rightHand = skeleton.rightHand() * 512;
-		Point2d leftHand = skeleton.leftHand() * 512;
-		Point2d center = skeleton.center() * 512;
-		Point2d head = skeleton.head() * 512;
+		for(int i = 0; i < skeletons.size(); ++i) {
+			Skeleton skeleton = skeletons[i];
 
-		Rect roi_rect = Rect(center.x < 448 && center.x > 0? center.x : 0, head.y < 64 ? 256 : 448, 64, 64);
-		Mat roi = output(roi_rect);
-		cvMan.copyTo(roi);
+			Point2d rightHand = skeleton.rightHand();
+			Point2d leftHand = skeleton.leftHand() * 512;
+			Point2d center = skeleton.center() * 512;
+			Point2d head = skeleton.head() * 512;
+
+			//Rect roi_rect = Rect(skeleton.center().x < 448 && skeleton.center().x > 0 ? skeleton.center().x : 0, head.y < 64 ? 256 : 448, 64, 64);
+			Mat roi = output(roi_rect);
+			cvMan.copyTo(roi);			
+		}
+
+
 
 		imshow("Output", output);
 
@@ -41,6 +69,6 @@ int main(int argc, char** argv) {
 		if(waitKey(1) == 27) {
 			break;
 		}
-
-	}*/
+*/
+	//}
 }
