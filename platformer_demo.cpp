@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 	std::cout << "The platformer demo has been temporarily disabled while the Skeleton object is reworked" << endl;
-	/*
+	
 	VideoCapture stream(0);
 	FrameHistory history(stream);
 
@@ -45,14 +45,13 @@ int main(int argc, char** argv) {
 		output = Scalar(255, 255, 255);
 
 		for(int i = 0; i < skeletons.size(); ++i) {
-			Skeleton skeleton = skeletons[i];
+			Skeleton* skeleton = skeletons[i];
+			skeleton->setMagnification(output);
 
-			Point2d rightHand = skeleton.rightHand();
-			Point2d leftHand = skeleton.leftHand() * 512;
-			Point2d center = skeleton.center() * 512;
-			Point2d head = skeleton.head() * 512;
+			Rect roi_rect = Rect(skeleton->head().x < 448 && skeleton->head().x > 0 ? skeleton->head().x : 0,
+			 					skeleton->head().y < 16 ? 256 : 448,
+			 					64, 64);
 
-			//Rect roi_rect = Rect(skeleton.center().x < 448 && skeleton.center().x > 0 ? skeleton.center().x : 0, head.y < 64 ? 256 : 448, 64, 64);
 			Mat roi = output(roi_rect);
 			cvMan.copyTo(roi);			
 		}
@@ -61,14 +60,14 @@ int main(int argc, char** argv) {
 
 		imshow("Output", output);
 
-		Mat vis = history.getLastFrame().clone();
+		/*Mat vis = history.getLastFrame().clone();
 		resize(vis, vis, Size(0, 0), 0.1, 0.1);
 		skeleton.visualize(vis);
-		imshow("Frame (+skeleton)", vis);
+		imshow("Frame (+skeleton)", vis);*/
 
 		if(waitKey(1) == 27) {
 			break;
 		}
-*/
-	//}
+
+	}
 }
