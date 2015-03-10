@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 		vector<Skeleton*> skeletons = getSkeleton(stream, history, userSensitivity, minimumArclength, 0.1, true);
 
 		// visualize skeletons
-		Mat visualization = history.getLastFrame().clone();
+		Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
 
 		int visWidth = visualization.cols, visHeight = visualization.rows;
 
@@ -48,6 +48,17 @@ int main(int argc, char** argv) {
 
 			// draw head
 			rectangle(visualization, skeleton->head(), skeleton->head(), Scalar(255, 0, 255), 100);
+
+			// check for gestures
+			if( (skeleton->rightHand().y - skeleton->center().y) > 50 
+				&& (skeleton->leftHand().y - skeleton->center().y) < -50) {
+				putText(visualization, "Right Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
+			} else if( (skeleton->leftHand().y - skeleton->center().y) > 50 
+				&& (skeleton->rightHand().y - skeleton->center().y) < -50) {
+				putText(visualization, "Left Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
+			} else if( (skeleton->rightHand().y < 64 && skeleton->leftHand().y > 64 && skeleton->rightHand().x > 64)) {
+				putText(visualization, "Coin!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
+			}
 		}
 
 		imshow("Visualization", visualization);

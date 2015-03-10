@@ -192,7 +192,9 @@ std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::
 			// classify based on position relative to center
 
 			// heads are far above the center: delta Y > threshold
-			if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15) {
+			// but also close X wise to the center: delta X < threshold
+			if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15
+				&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 15) {
 				heads.push_back(edgePointsList[skeleton][limb]);
 			}
 
