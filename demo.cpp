@@ -18,31 +18,10 @@ int main(int argc, char** argv) {
 	autoCalibrateSensitivity(&userSensitivity, stream, minimumArclength, 1);
 
 	for(;;) {
-		Mat visualization; // initialize a backdrop for the skeleton
-		Mat frame, flipped_frame;
-
-		stream.read(flipped_frame);
-		flip(flipped_frame, frame, 1);
-
-		visualization = frame.clone();
-		//visualization = Mat::zeros(frame.size(), CV_8UC3);
-
-		Mat delta = history.motion(frame);
-		history.append(frame);
-
-		resize(delta, delta, Size(0, 0), 0.1, 0.1);
-		resize(frame, frame, Size(0, 0), 0.1, 0.1);
-		
-		Mat mask = extractUserMask(delta, userSensitivity / 256);
-		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
-
-		std::vector<Point> centers;
-		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
-
-		vector<Skeleton*> skeletons = skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
+		vector<Skeleton*> skeletons = getSkeleton(stream, history, userSensitivity, minimumArclength, 0.1, true);
 
 		// visualize skeletons
+		Mat visualization = history.getLastFrame().clone();
 
 		int visWidth = visualization.cols, visHeight = visualization.rows;
 

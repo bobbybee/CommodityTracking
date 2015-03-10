@@ -270,3 +270,45 @@ void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int mi
 
 	// if this point is reached, all hope is lost :(
 }
+
+// unless you have some special case requiring internal functions,
+// use getSkeleton in your application's main loop
+
+vector<Skeleton*> getSkeleton
+(
+	VideoCapture& stream, // webcam stream
+	FrameHistory& history, // history for computing delta
+	int userSensitivity, // precalibrated value for thresholding
+	int minimumArclength, // threshold for discarding noise contours
+	double scaleFactor, // (fractional) value for scaling the image (optimization)
+    bool shouldFlip // flip webcam image?
+) {
+	// read a frame and optionally flip it
+
+	Mat frame, flipped_frame;
+	stream.read(flipped_frame);
+	
+	if(shouldFlip) {
+		flip(flipped_frame, frame, 1);	
+	} else {
+		frame = flipped_frame; // flipping was not requested
+	}
+	
+	// get motion delta
+	Mat delta = history.motion(frame);
+	history.append(frame);
+
+	// resize down image to speed up calculations
+	resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
+	resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
+	
+	// calculate mask
+	Mat mask = extractUserMask(delta, userSensitivity / 256);
+	Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+
+	std::vector<Point> centers;
+	std::vector<std::vector<Point> > edgePointsList;
+	centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
+
+	return skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
+}

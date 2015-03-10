@@ -70,4 +70,14 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height);
 void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval);
 
+vector<Skeleton*> getSkeleton
+(
+	VideoCapture& stream, // webcam stream
+	FrameHistory& history, // history for computing delta
+	int userSensitivity, // precalibrated value for thresholding
+	int minimumArclength, // threshold for discarding noise contours
+	double scaleFactor, // (fractional) value for scaling the image (optimization)
+    bool shouldFlip // flip webcam image?
+);
+
 #endif
