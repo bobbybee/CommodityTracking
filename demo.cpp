@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 
 	// automatically calibrate userSensitivity
 
-	int minimumArclength = 200;
+	int minimumArclength = 150;
 	int userSensitivity = 255;
 
 	autoCalibrateSensitivity(&userSensitivity, stream, minimumArclength, 1);
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, false, edgePointsList);
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
 
 		vector<Skeleton*> skeletons = skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
 

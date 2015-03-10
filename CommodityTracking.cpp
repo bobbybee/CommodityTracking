@@ -4,22 +4,26 @@ FrameHistory::FrameHistory(VideoCapture& stream) {
 	stream.read(m_lastFrame); // fixes a race condition in the first few frames
 	stream.read(m_threeFrame); // fixes a race condition in the first few frames
 	stream.read(m_twoFrame);
+	stream.read(m_fourFrame);
 }
 
 void FrameHistory::append(Mat frame) {
+	m_fourFrame = m_threeFrame;
 	m_threeFrame = m_twoFrame;
 	m_twoFrame = m_lastFrame;
 	m_lastFrame = frame;
 }
 
 Mat FrameHistory::motion(Mat frame) {
-	Mat out1, out2, out3, delta;
+	Mat out1, out2, out3, out4, delta;
 	absdiff(m_twoFrame, frame, out1);
 	absdiff(m_lastFrame, frame, out2);
 	absdiff(m_threeFrame, frame, out3);
+	absdiff(m_fourFrame, frame, out4);
 
 	bitwise_or(out2, out3, delta);
 	bitwise_or(delta, out1, delta);
+	bitwise_or(delta, out4, delta);
 
 	return delta;
 }
@@ -41,6 +45,8 @@ Mat extractUserMask(Mat& delta, double sensitivity) {
 	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
 	blur(delta, delta, Size(2, 2), Point(-1, -1));
 	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+	blur(delta, delta, Size(7, 7), Point(-1, -1));
+	threshold(delta, delta, sensitivity * 60, 255, THRESH_BINARY);
 
 	cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -54,12 +60,10 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-	blur(mask, mask, Size(14, 14), Point(-1, -1));
-	threshold(mask, mask, 30, 255, THRESH_BINARY);
 
 	// extract edges using Canny
 	Mat edges;
-	Canny(mask, edges, 10, 10 * 3, 3);
+	Canny(mask, edges, 20, 20 * 3, 3);
 
 	cvtColor(edges, edges, CV_GRAY2BGR);
 
@@ -69,19 +73,21 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 
 	for(int i = 0; i < contours.size(); ++i) {
 		double t_arcLength = arcLength(Mat(contours[i]), true);
-		approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
+		approxPolyDP(contours[i], contours[i], t_arcLength * 0.005, true);
 
 		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
 		}
 	}
 
+	imshow("ContourOut", contourOut);
+
 	return contourOut;
 }
 
 std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
 	Mat edges;
-	Canny(simplifiedUserMask, edges, 100, 100 * 3, 3);
+	Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
 
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -151,7 +157,7 @@ std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumA
 	}
 
 	if(draw) {
-		resize(contourOut, contourOut, Size(0, 0), 10, 10);
+		resize(contourOut, contourOut, Size(0, 0), 3, 3);
 		imshow("Edge Point Sketch", contourOut);
 	}
 

@@ -15,7 +15,7 @@ class FrameHistory {
 		Mat motion(Mat frame);
 		Mat getLastFrame();
 	private:
-		Mat m_lastFrame, m_twoFrame, m_threeFrame;
+		Mat m_lastFrame, m_twoFrame, m_threeFrame, m_fourFrame;
 };
 
 class Skeleton {
