@@ -80,8 +80,6 @@ Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
 		}
 	}
 
-	imshow("ContourOut", contourOut);
-
 	return contourOut;
 }
 
