@@ -2,317 +2,319 @@
 
 using namespace cv;
 
-FrameHistory::FrameHistory(VideoCapture& stream) {
-	stream.read(m_lastFrame); // fixes a race condition in the first few frames
-	stream.read(m_threeFrame); // fixes a race condition in the first few frames
-	stream.read(m_twoFrame);
-	stream.read(m_fourFrame);
-}
-
-void FrameHistory::append(Mat frame) {
-	m_fourFrame = m_threeFrame;
-	m_threeFrame = m_twoFrame;
-	m_twoFrame = m_lastFrame;
-	m_lastFrame = frame;
-}
-
-Mat FrameHistory::motion(Mat frame) {
-	Mat out1, out2, out3, out4, delta;
-	absdiff(m_twoFrame, frame, out1);
-	absdiff(m_lastFrame, frame, out2);
-	absdiff(m_threeFrame, frame, out3);
-	absdiff(m_fourFrame, frame, out4);
-
-	bitwise_or(out2, out3, delta);
-	bitwise_or(delta, out1, delta);
-	bitwise_or(delta, out4, delta);
-
-	return delta;
-}
-
-Mat FrameHistory::getLastFrame() {
-	return m_lastFrame;
-}
-
-// the black-and-white user mask is found from
-// the motion extracted image through a series
-// of various blurs and corresponding thresholds
-
-Mat extractUserMask(Mat& delta, double sensitivity) {
-	cvtColor(delta, delta, CV_BGR2GRAY);
-
-	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
-	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
-	blur(delta, delta, Size(2, 2), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
-	blur(delta, delta, Size(7, 7), Point(-1, -1));
-	threshold(delta, delta, sensitivity * 60, 255, THRESH_BINARY);
-
-	cvtColor(delta, delta, CV_GRAY2BGR);
-
-	return delta;
-}
-
-// NOTE: may trash original mask. clone if preservation is needed
-Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
-	// prepare for Canny + contour detection
-	cvtColor(mask, mask, CV_BGR2GRAY);
-
-	vector<vector<Point> > contours;
-	vector<Vec4i> hierarchy;
-
-	// extract edges using Canny
-	Mat edges;
-	Canny(mask, edges, 20, 20 * 3, 3);
-
-	cvtColor(edges, edges, CV_GRAY2BGR);
-
-	// find contours, simplify and draw large contours to contourOut
-	Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
-	findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-
-	for(int i = 0; i < contours.size(); ++i) {
-		double t_arcLength = arcLength(Mat(contours[i]), true);
-		approxPolyDP(contours[i], contours[i], t_arcLength * 0.005, true);
-
-		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-			drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
-		}
+namespace ct {
+	FrameHistory::FrameHistory(VideoCapture& stream) {
+		stream.read(m_lastFrame); // fixes a race condition in the first few frames
+		stream.read(m_threeFrame); // fixes a race condition in the first few frames
+		stream.read(m_twoFrame);
+		stream.read(m_fourFrame);
 	}
 
-	return contourOut;
-}
+	void FrameHistory::append(Mat frame) {
+		m_fourFrame = m_threeFrame;
+		m_threeFrame = m_twoFrame;
+		m_twoFrame = m_lastFrame;
+		m_lastFrame = frame;
+	}
 
-std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
-	Mat edges;
-	Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
+	Mat FrameHistory::motion(Mat frame) {
+		Mat out1, out2, out3, out4, delta;
+		absdiff(m_twoFrame, frame, out1);
+		absdiff(m_lastFrame, frame, out2);
+		absdiff(m_threeFrame, frame, out3);
+		absdiff(m_fourFrame, frame, out4);
 
-	vector<vector<Point> > contours;
-	vector<Vec4i> hierarchy;
+		bitwise_or(out2, out3, delta);
+		bitwise_or(delta, out1, delta);
+		bitwise_or(delta, out4, delta);
 
-	Mat contourOut;
+		return delta;
+	}
 
-	if(draw)
-		contourOut = Mat::zeros(frame.size(), CV_8UC3);
-	
-	findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+	Mat FrameHistory::getLastFrame() {
+		return m_lastFrame;
+	}
 
-	vector<Point> centers;
+	// the black-and-white user mask is found from
+	// the motion extracted image through a series
+	// of various blurs and corresponding thresholds
 
-	for(int i = 0; i < contours.size(); ++i) {
-		double t_arcLength = arcLength(Mat(contours[i]), true);
-		//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
+	Mat extractUserMask(Mat& delta, double sensitivity) {
+		cvtColor(delta, delta, CV_BGR2GRAY);
 
-		if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-			if(draw)
-				drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+		blur(delta, delta, Size(2, 2), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		blur(delta, delta, Size(2, 2), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		blur(delta, delta, Size(2, 2), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		blur(delta, delta, Size(7, 7), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 60, 255, THRESH_BINARY);
+
+		cvtColor(delta, delta, CV_GRAY2BGR);
+
+		return delta;
+	}
+
+	// NOTE: may trash original mask. clone if preservation is needed
+	Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
+		// prepare for Canny + contour detection
+		cvtColor(mask, mask, CV_BGR2GRAY);
+
+		vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+
+		// extract edges using Canny
+		Mat edges;
+		Canny(mask, edges, 20, 20 * 3, 3);
+
+		cvtColor(edges, edges, CV_GRAY2BGR);
+
+		// find contours, simplify and draw large contours to contourOut
+		Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
+		findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+
+		for(int i = 0; i < contours.size(); ++i) {
+			double t_arcLength = arcLength(Mat(contours[i]), true);
+			approxPolyDP(contours[i], contours[i], t_arcLength * 0.005, true);
+
+			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+				drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+			}
+		}
+
+		return contourOut;
+	}
+
+	std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
+		Mat edges;
+		Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
+
+		vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+
+		Mat contourOut;
+
+		if(draw)
+			contourOut = Mat::zeros(frame.size(), CV_8UC3);
 		
-			int averageX = 0, averageY = 0, n = 0;
-			Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
-			vector<Point> edgePoints;
+		findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-			for(int j = 0; j < contours[i].size(); ++j) {
-				++n;
-				averageX += contours[i][j].x;
-				averageY += contours[i][j].y;
+		vector<Point> centers;
 
-				if(contours[i][j].x < topLeft.x)
-					topLeft.x = contours[i][j].x;
-				if(contours[i][j].y < topLeft.y )
-					topLeft.y = contours[i][j].y;
+		for(int i = 0; i < contours.size(); ++i) {
+			double t_arcLength = arcLength(Mat(contours[i]), true);
+			//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
 
-				if(contours[i][j].x > bottomRight.x)
-					bottomRight.x = contours[i][j].x;
-				if(contours[i][j].y > bottomRight.y)
-					bottomRight.y = contours[i][j].y;
-			}
+			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+				if(draw)
+					drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+			
+				int averageX = 0, averageY = 0, n = 0;
+				Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
+				vector<Point> edgePoints;
 
-			for(int j = 0; j < contours[i].size(); ++j) {
-				if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
-					(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
-				
-					edgePoints.push_back(contours[i][j]);
+				for(int j = 0; j < contours[i].size(); ++j) {
+					++n;
+					averageX += contours[i][j].x;
+					averageY += contours[i][j].y;
+
+					if(contours[i][j].x < topLeft.x)
+						topLeft.x = contours[i][j].x;
+					if(contours[i][j].y < topLeft.y )
+						topLeft.y = contours[i][j].y;
+
+					if(contours[i][j].x > bottomRight.x)
+						bottomRight.x = contours[i][j].x;
+					if(contours[i][j].y > bottomRight.y)
+						bottomRight.y = contours[i][j].y;
 				}
-			}
 
-			averageX /= n;
-			averageY /= n;
-
-			centers.push_back(Point(averageX, averageY));
-
-			if(draw)
-				rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
-
-			if(draw) {
-				for(int i = 0; i < edgePoints.size(); ++i) {
-					rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+				for(int j = 0; j < contours[i].size(); ++j) {
+					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
+						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
+					
+						edgePoints.push_back(contours[i][j]);
+					}
 				}
-			}
 
-			edgePointsList.push_back(edgePoints);
+				averageX /= n;
+				averageY /= n;
 
-		}
-	}
+				centers.push_back(Point(averageX, averageY));
 
-	if(draw) {
-		resize(contourOut, contourOut, Size(0, 0), 3, 3);
-		imshow("Edge Point Sketch", contourOut);
-	}
+				if(draw)
+					rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
 
-	return centers;
-}
-
-// computes the mean of a vector of Point's
-
-static Point averagePoints(std::vector<Point> points) {
-	if(points.size()) {
-		int sumX = 0, sumY = 0;
-
-		for(int i = 0; i < points.size(); ++i) {
-			sumX += points[i].x;
-			sumY += points[i].y;
-		}
-
-		return Point(sumX / points.size(), sumY / points.size());
-	} else {
-		return Point(0, 0);
-	}
-}
-
-std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height) {
-	vector<Skeleton*> skeletons;
-
-	// each center corresponds to a skeleton { mostly }
-	for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
-		// vector, as duplicate points *will* be found
-		vector<Point> leftHands, rightHands, leftLegs, rightLegs, heads, unclassifieds;
-
-		// iterate through the list of points (limbs, typically)
-		for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
-			// classify based on position relative to center
-
-			// heads are far above the center: delta Y > threshold
-			// but also close X wise to the center: delta X < threshold
-			if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15
-				&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 15) {
-				heads.push_back(edgePointsList[skeleton][limb]);
-			}
-
-			// legs are far below the center: delta Y > threshold
-			else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
-				// determine which leg is whcih by relative X and push to the respective vector
-				
-				if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
-					rightLegs.push_back(edgePointsList[skeleton][limb]);
-				} else {
-					leftLegs.push_back(edgePointsList[skeleton][limb]);
+				if(draw) {
+					for(int i = 0; i < edgePoints.size(); ++i) {
+						rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+					}
 				}
-			}
 
-			// hands are far to the left or right of the center: abs(delta X) > threshold
-			else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
-				if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
-					rightHands.push_back(edgePointsList[skeleton][limb]);
-				} else {
-					leftHands.push_back(edgePointsList[skeleton][limb]);
-				}
-			} 
+				edgePointsList.push_back(edgePoints);
 
-			// CommodityTracking doesn't understand other body parts,
-			// but it will save their points in case the application does
-			else {
-				unclassifieds.push_back(edgePointsList[skeleton][limb]);
 			}
 		}
 
-		// since we have vectors filled with duplicate points,
-		// we will average them together to find the true limb position
+		if(draw) {
+			resize(contourOut, contourOut, Size(0, 0), 3, 3);
+			imshow("Edge Point Sketch", contourOut);
+		}
 
-		Point rightHand = averagePoints(rightHands), leftHand = averagePoints(leftHands),
-			  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
-			  head = averagePoints(heads);
-
-		// populate the skeleton object
-		skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height));
+		return centers;
 	}
 
-	return skeletons;
-}
+	// computes the mean of a vector of Point's
 
-// auto-calibration works by running a trivial part of the actual code;
-// it's main body is derived from the demo itself
-// however, it is constantly changing its sensitivity parameter
-// in order to minimize noise without compromising flexibility
+	static Point averagePoints(std::vector<Point> points) {
+		if(points.size()) {
+			int sumX = 0, sumY = 0;
 
-void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval) {
-	FrameHistory history(stream);
+			for(int i = 0; i < points.size(); ++i) {
+				sumX += points[i].x;
+				sumY += points[i].y;
+			}
 
-	while(*userSensitivity < 1000) {
-		Mat frame;
-		stream.read(frame);
+			return Point(sumX / points.size(), sumY / points.size());
+		} else {
+			return Point(0, 0);
+		}
+	}
+
+	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height) {
+		vector<Skeleton*> skeletons;
+
+		// each center corresponds to a skeleton { mostly }
+		for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
+			// vector, as duplicate points *will* be found
+			vector<Point> leftHands, rightHands, leftLegs, rightLegs, heads, unclassifieds;
+
+			// iterate through the list of points (limbs, typically)
+			for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
+				// classify based on position relative to center
+
+				// heads are far above the center: delta Y > threshold
+				// but also close X wise to the center: delta X < threshold
+				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15
+					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 15) {
+					heads.push_back(edgePointsList[skeleton][limb]);
+				}
+
+				// legs are far below the center: delta Y > threshold
+				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+					// determine which leg is whcih by relative X and push to the respective vector
+					
+					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+						rightLegs.push_back(edgePointsList[skeleton][limb]);
+					} else {
+						leftLegs.push_back(edgePointsList[skeleton][limb]);
+					}
+				}
+
+				// hands are far to the left or right of the center: abs(delta X) > threshold
+				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
+					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
+						rightHands.push_back(edgePointsList[skeleton][limb]);
+					} else {
+						leftHands.push_back(edgePointsList[skeleton][limb]);
+					}
+				} 
+
+				// CommodityTracking doesn't understand other body parts,
+				// but it will save their points in case the application does
+				else {
+					unclassifieds.push_back(edgePointsList[skeleton][limb]);
+				}
+			}
+
+			// since we have vectors filled with duplicate points,
+			// we will average them together to find the true limb position
+
+			Point rightHand = averagePoints(rightHands), leftHand = averagePoints(leftHands),
+				  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
+				  head = averagePoints(heads);
+
+			// populate the skeleton object
+			skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height));
+		}
+
+		return skeletons;
+	}
+
+	// auto-calibration works by running a trivial part of the actual code;
+	// it's main body is derived from the demo itself
+	// however, it is constantly changing its sensitivity parameter
+	// in order to minimize noise without compromising flexibility
+
+	void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval) {
+		FrameHistory history(stream);
+
+		while(*userSensitivity < 1000) {
+			Mat frame;
+			stream.read(frame);
+			
+			Mat delta = history.motion(frame);
+			history.append(frame);
+
+			Mat mask = extractUserMask(delta, *userSensitivity / 256);
+			Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+
+			*userSensitivity += interval;
+
+			cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
+
+			if(countNonZero(simplifiedUserMask) == 0) {
+				// optimal calibration found, but make it a bit more sensitive than needed
+				// noise fluctuates massively, after all
+
+				*userSensitivity += interval * 2;
+				return;
+			}
+		}
+
+		// if this point is reached, all hope is lost :(
+	}
+
+	// unless you have some special case requiring internal functions,
+	// use getSkeleton in your application's main loop
+
+	vector<Skeleton*> getSkeleton
+	(
+		VideoCapture& stream, // webcam stream
+		FrameHistory& history, // history for computing delta
+		int userSensitivity, // precalibrated value for thresholding
+		int minimumArclength, // threshold for discarding noise contours
+		double scaleFactor, // (fractional) value for scaling the image (optimization)
+	    bool shouldFlip // flip webcam image?
+	) {
+		// read a frame and optionally flip it
+
+		Mat frame, flipped_frame;
+		stream.read(flipped_frame);
 		
+		if(shouldFlip) {
+			flip(flipped_frame, frame, 1);	
+		} else {
+			frame = flipped_frame; // flipping was not requested
+		}
+		
+		// get motion delta
 		Mat delta = history.motion(frame);
 		history.append(frame);
 
-		Mat mask = extractUserMask(delta, *userSensitivity / 256);
+		// resize down image to speed up calculations
+		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
+		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
+		
+		// calculate mask
+		Mat mask = extractUserMask(delta, userSensitivity / 256);
 		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-		*userSensitivity += interval;
+		std::vector<Point> centers;
+		std::vector<std::vector<Point> > edgePointsList;
+		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
 
-		cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
-
-		if(countNonZero(simplifiedUserMask) == 0) {
-			// optimal calibration found, but make it a bit more sensitive than needed
-			// noise fluctuates massively, after all
-
-			*userSensitivity += interval * 2;
-			return;
-		}
+		return skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
 	}
-
-	// if this point is reached, all hope is lost :(
-}
-
-// unless you have some special case requiring internal functions,
-// use getSkeleton in your application's main loop
-
-vector<Skeleton*> getSkeleton
-(
-	VideoCapture& stream, // webcam stream
-	FrameHistory& history, // history for computing delta
-	int userSensitivity, // precalibrated value for thresholding
-	int minimumArclength, // threshold for discarding noise contours
-	double scaleFactor, // (fractional) value for scaling the image (optimization)
-    bool shouldFlip // flip webcam image?
-) {
-	// read a frame and optionally flip it
-
-	Mat frame, flipped_frame;
-	stream.read(flipped_frame);
-	
-	if(shouldFlip) {
-		flip(flipped_frame, frame, 1);	
-	} else {
-		frame = flipped_frame; // flipping was not requested
-	}
-	
-	// get motion delta
-	Mat delta = history.motion(frame);
-	history.append(frame);
-
-	// resize down image to speed up calculations
-	resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
-	resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
-	
-	// calculate mask
-	Mat mask = extractUserMask(delta, userSensitivity / 256);
-	Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
-
-	std::vector<Point> centers;
-	std::vector<std::vector<Point> > edgePointsList;
-	centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
-
-	return skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
-}
+};

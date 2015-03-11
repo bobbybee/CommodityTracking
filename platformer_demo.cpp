@@ -4,6 +4,7 @@
 #include <CommodityTracking.h>
 
 using namespace cv;
+using namespace ct;
 
 int main(int argc, char** argv) {
 	VideoCapture stream(0);
