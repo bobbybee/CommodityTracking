@@ -39,7 +39,7 @@ namespace ct {
 	// the motion extracted image through a series
 	// of various blurs and corresponding thresholds
 
-	Mat extractUserMask(Mat& delta, double sensitivity) {
+	cv::Mat extractUserMask(cv::Mat& delta, double sensitivity) {
 		cvtColor(delta, delta, CV_BGR2GRAY);
 
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
@@ -57,7 +57,7 @@ namespace ct {
 	}
 
 	// NOTE: may trash original mask. clone if preservation is needed
-	Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength) {
+	cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength) {
 		// prepare for Canny + contour detection
 		cvtColor(mask, mask, CV_BGR2GRAY);
 
@@ -86,7 +86,7 @@ namespace ct {
 		return contourOut;
 	}
 
-	std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList) {
+	std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
 		Mat edges;
 		Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
 
@@ -182,7 +182,7 @@ namespace ct {
 		}
 	}
 
-	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height) {
+	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
 		vector<Skeleton*> skeletons;
 
 		// each center corresponds to a skeleton { mostly }
@@ -247,7 +247,7 @@ namespace ct {
 	// however, it is constantly changing its sensitivity parameter
 	// in order to minimize noise without compromising flexibility
 
-	void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval) {
+	void autoCalibrateSensitivity(int* userSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
 		FrameHistory history(stream);
 
 		while(*userSensitivity < 1000) {
@@ -279,9 +279,9 @@ namespace ct {
 	// unless you have some special case requiring internal functions,
 	// use getSkeleton in your application's main loop
 
-	vector<Skeleton*> getSkeleton
+	std::vector<Skeleton*> getSkeleton
 	(
-		VideoCapture& stream, // webcam stream
+		cv::VideoCapture& stream, // webcam stream
 		FrameHistory& history, // history for computing delta
 		int userSensitivity, // precalibrated value for thresholding
 		int minimumArclength, // threshold for discarding noise contours
