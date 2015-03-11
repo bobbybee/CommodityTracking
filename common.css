@@ -23,12 +23,16 @@ body {
     font-size: 120%;
 }
 
-#today {
+#anyone {
+    font-style: italic;
 }
 
 a {
-    color: crimson;
     font-style: italic;
-    font-size: 150%;
     text-decoration: none;
+}
+
+.code {
+    font-family: monospace;
+    background-color: #EEE;
 }
