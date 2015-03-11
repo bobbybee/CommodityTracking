@@ -1,0 +1,34 @@
+body {
+    background-color: aqua;
+    font-family: Verdana, Times, serif;
+    text-align: center;
+
+}
+
+#contribute {
+    position: fixed;
+    right: 1%;
+}
+
+#title {
+
+}
+
+#tagline {
+    margin-top: -1%;
+    font-style: italic;
+}
+
+#description {
+    font-size: 120%;
+}
+
+#today {
+}
+
+a {
+    color: crimson;
+    font-style: italic;
+    font-size: 150%;
+    text-decoration: none;
+}
