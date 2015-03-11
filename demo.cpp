@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <CommodityTracking.h>
 
+using namespace cv;
+
 int main(int argc, char** argv) {
 	// initialize camera stream from the built-in webcam
 	// and initialize FrameHistory with that stream

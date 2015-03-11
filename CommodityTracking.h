@@ -5,22 +5,21 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
 
-using namespace cv;
 using namespace std;
 
 class FrameHistory {
 	public:
-		FrameHistory(VideoCapture& stream);
-		void append(Mat frame);
-		Mat motion(Mat frame);
-		Mat getLastFrame();
+		FrameHistory(cv::VideoCapture& stream);
+		void append(cv::Mat frame);
+		cv::Mat motion(cv::Mat frame);
+		cv::Mat getLastFrame();
 	private:
-		Mat m_lastFrame, m_twoFrame, m_threeFrame, m_fourFrame;
+		cv::Mat m_lastFrame, m_twoFrame, m_threeFrame, m_fourFrame;
 };
 
 class Skeleton {
 public:
-	Skeleton(Point leftHand, Point rightHand, Point leftLeg, Point rightLeg, Point center, Point head, int width, int height) {
+	Skeleton(cv::Point leftHand, cv::Point rightHand, cv::Point leftLeg, cv::Point rightLeg, cv::Point center, cv::Point head, int width, int height) {
 		m_width = width;
 		m_height = height;
 
@@ -36,43 +35,48 @@ public:
 		m_magHeight = 1;
 	}
 
-	Point2d normalize(Point2d p) {
-		return Point2d( (double) p.x / m_width, (double) p.y / m_height);
+	cv::Point2d normalize(cv::Point2d p) {
+		return cv::Point2d( (double) p.x / m_width, (double) p.y / m_height);
 	}
 
-	void setMagnification(Mat m) {
+	void setMagnification(cv::Mat m) {
 		m_magWidth = m.cols;
 		m_magHeight = m.rows;
 	}
 
-	Point2d magnify(Point2d p) {
-		return Point2d(p.x * m_magWidth, p.y * m_magHeight);
+	void setMagnification(int width, int height) {
+		m_magWidth = width;
+		m_magHeight = height;
+	}
+
+	cv::Point2d magnify(cv::Point2d p) {
+		return cv::Point2d(p.x * m_magWidth, p.y * m_magHeight);
 	}
 
 	// define helper utilities for accessing skeleton
-	Point2d leftHand() { return magnify(m_leftHand); };
-	Point2d rightHand() { return magnify(m_rightHand); };
-	Point2d leftLeg() { return magnify(m_leftLeg); };
-	Point2d rightLeg() { return magnify(m_rightLeg); };
-	Point2d center() { return magnify(m_center); };
-	Point2d head() { return magnify(m_head); };
+	cv::Point2d leftHand() { return magnify(m_leftHand); };
+	cv::Point2d rightHand() { return magnify(m_rightHand); };
+	cv::Point2d leftLeg() { return magnify(m_leftLeg); };
+	cv::Point2d rightLeg() { return magnify(m_rightLeg); };
+	cv::Point2d center() { return magnify(m_center); };
+	cv::Point2d head() { return magnify(m_head); };
 
 	// member properties
-	Point2d m_leftHand, m_rightHand, m_leftLeg, m_rightLeg, m_center, m_head;
+	cv::Point2d m_leftHand, m_rightHand, m_leftLeg, m_rightLeg, m_center, m_head;
 	int m_width, m_height;
 	int m_magWidth, m_magHeight;
 
 };
 
-Mat extractUserMask(Mat& delta, double sensitivity);
-Mat simplifyUserMask(Mat& mask, Mat& frame, int minimumArclength);
-std::vector<Point> getEdgePoints(Mat frame, Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<Point> >& edgePointsList);
-std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Point>& centers, std::vector<std::vector<Point> >& edgePointsList, int width, int height);
-void autoCalibrateSensitivity(int* userSensitivity, VideoCapture& stream, int minimumArclength, int interval);
+cv::Mat extractUserMask(cv::Mat& delta, double sensitivity);
+cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength);
+std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList);
+std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height);
+void autoCalibrateSensitivity(int* userSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval);
 
 vector<Skeleton*> getSkeleton
 (
-	VideoCapture& stream, // webcam stream
+	cv::VideoCapture& stream, // webcam stream
 	FrameHistory& history, // history for computing delta
 	int userSensitivity, // precalibrated value for thresholding
 	int minimumArclength, // threshold for discarding noise contours

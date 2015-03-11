@@ -1,5 +1,7 @@
 #include "CommodityTracking.h"
 
+using namespace cv;
+
 FrameHistory::FrameHistory(VideoCapture& stream) {
 	stream.read(m_lastFrame); // fixes a race condition in the first few frames
 	stream.read(m_threeFrame); // fixes a race condition in the first few frames

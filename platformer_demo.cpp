@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <CommodityTracking.h>
 
+using namespace cv;
+
 int main(int argc, char** argv) {
-	std::cout << "The platformer demo has been temporarily disabled while the Skeleton object is reworked" << endl;
-	
 	VideoCapture stream(0);
 	FrameHistory history(stream);
 
