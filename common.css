@@ -15,8 +15,17 @@ body {
 #header {
     position: fixed;
     top: 0%;
-    right: 2%;
+    right: 0%;
     overflow: hidden;
+}
+
+#header-container {
+    width: 100%;
+    height: 10%;
+    background-color: #DDD;
+    position: absolute;
+    top: 0%;
+    left: 0%;
 }
 
 #content {
@@ -58,4 +67,10 @@ a {
 
 .application {
     font-style: italic;
+}
+
+.nav {
+    font-size: 150%;
+    margin-left: 2%;
+    margin-right: 2%;
 }
