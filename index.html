@@ -4,21 +4,16 @@
 	<title>CommodityTracking</title>
     
     <script>
-    var webcamLight
     var lightOn = true;
         
     window.addEventListener("load", function() {
-        webcamLight =  document.getElementById("webcam-svg").contentDocument.getElementById("light");
-        
-        console.log(webcam);
-        
         setInterval(function() {
             // blink light by editing SVG itself
             
             if(lightOn) {
-                webcamLight.style.cssText = "fill: rgb(0, 0, 0);";
+                document.getElementById("webcam-svg").contentDocument.getElementById("light").style.cssText = "fill: rgb(0, 0, 0);";
             } else {
-                webcamLight.style.cssText = "fill: rgb(0, 128, 0);";
+                document.getElementById("webcam-svg").contentDocument.getElementById("light").style.cssText = "fill: rgb(0, 128, 0);";
             }
             
             lightOn = !lightOn;
