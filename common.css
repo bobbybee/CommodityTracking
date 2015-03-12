@@ -1,6 +1,8 @@
+@import url(http://fonts.googleapis.com/css?family=Fjord+One);
+
 body {
-    background-color: aqua;
-    font-family: Verdana, Times, serif;
+    background-color: #EEE;
+    font-family: "Fjord One", Verdana, Times, serif;
     text-align: center;
 
 }
@@ -8,6 +10,20 @@ body {
 #contribute {
     position: fixed;
     right: 1%;
+}
+
+#header {
+    position: fixed;
+    top: 0%;
+    overflow: hidden;
+}
+
+#content {
+    position: absolute;
+    top: 10%;
+    height: 90%;
+    width: 99%;
+    overflow: auto;
 }
 
 #title {
@@ -24,7 +40,7 @@ body {
 }
 
 #anyone {
-    font-style: italic;
+    #font-style: italic;
 }
 
 a {
