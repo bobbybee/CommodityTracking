@@ -31,7 +31,7 @@ body {
 #content {
     position: absolute;
     top: 10%;
-    height: 90%;
+    height: 86%;
     width: 99%;
     overflow: auto;
 }
@@ -76,4 +76,8 @@ a {
     font-size: 150%;
     margin-left: 2%;
     margin-right: 2%;
+}
+
+#footer {
+    text-align: right;
 }
