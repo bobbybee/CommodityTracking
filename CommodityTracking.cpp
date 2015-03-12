@@ -97,7 +97,7 @@ namespace ct {
 
 		if(draw)
 			contourOut = Mat::zeros(frame.size(), CV_8UC3);
-		
+
 		findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
 		vector<Point> centers;
@@ -109,7 +109,7 @@ namespace ct {
 			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
 				if(draw)
 					drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
-			
+
 				int averageX = 0, averageY = 0, n = 0;
 				Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
 				vector<Point> edgePoints;
@@ -131,9 +131,9 @@ namespace ct {
 				}
 
 				for(int j = 0; j < contours[i].size(); ++j) {
-					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) || 
+					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) ||
 						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
-					
+
 						edgePoints.push_back(contours[i][j]);
 					}
 				}
@@ -204,7 +204,7 @@ namespace ct {
 				// legs are far below the center: delta Y > threshold
 				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
 					// determine which leg is whcih by relative X and push to the respective vector
-					
+
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
 						rightLegs.push_back(edgePointsList[skeleton][limb]);
 					} else {
@@ -219,7 +219,7 @@ namespace ct {
 					} else {
 						leftHands.push_back(edgePointsList[skeleton][limb]);
 					}
-				} 
+				}
 
 				// CommodityTracking doesn't understand other body parts,
 				// but it will save their points in case the application does
@@ -247,20 +247,21 @@ namespace ct {
 	// however, it is constantly changing its sensitivity parameter
 	// in order to minimize noise without compromising flexibility
 
-	void autoCalibrateSensitivity(int* userSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
+	int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
 		FrameHistory history(stream);
+		int sensitivity = initialUserSensitivity;
 
-		while(*userSensitivity < 1000) {
+		while(sensitivity < 1000) {
 			Mat frame;
 			stream.read(frame);
-			
+
 			Mat delta = history.motion(frame);
 			history.append(frame);
 
-			Mat mask = extractUserMask(delta, *userSensitivity / 256);
+			Mat mask = extractUserMask(delta, sensitivity / 256);
 			Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-			*userSensitivity += interval;
+			sensitivity += interval;
 
 			cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
 
@@ -268,12 +269,12 @@ namespace ct {
 				// optimal calibration found, but make it a bit more sensitive than needed
 				// noise fluctuates massively, after all
 
-				*userSensitivity += interval * 2;
-				return;
+				sensitivity += interval * 2;
+				break;
 			}
 		}
 
-		// if this point is reached, all hope is lost :(
+		return sensitivity;
 	}
 
 	// unless you have some special case requiring internal functions,
@@ -292,13 +293,13 @@ namespace ct {
 
 		Mat frame, flipped_frame;
 		stream.read(flipped_frame);
-		
+
 		if(shouldFlip) {
-			flip(flipped_frame, frame, 1);	
+			flip(flipped_frame, frame, 1);
 		} else {
 			frame = flipped_frame; // flipping was not requested
 		}
-		
+
 		// get motion delta
 		Mat delta = history.motion(frame);
 		history.append(frame);
@@ -306,7 +307,7 @@ namespace ct {
 		// resize down image to speed up calculations
 		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
 		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
-		
+
 		// calculate mask
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
 		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
