@@ -16,9 +16,7 @@ int main(int argc, char** argv) {
 	// automatically calibrate userSensitivity
 
 	int minimumArclength = 150;
-	int userSensitivity = 255;
-
-	autoCalibrateSensitivity(&userSensitivity, stream, minimumArclength, 1);
+	int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
 
 	for(;;) {
 		vector<Skeleton*> skeletons = getSkeleton(stream, history, userSensitivity, minimumArclength, 0.1, true);
@@ -57,13 +55,13 @@ int main(int argc, char** argv) {
 				putText(visualization, "Coin Right!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
 			} else if( (skeleton->leftHand().y < 64 && skeleton->rightHand().y > 64 && skeleton->leftHand().x > 64)) {
 				putText(visualization, "Coin Left!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
-			} else if( (skeleton->rightHand().y - skeleton->center().y) > 50 
+			} else if( (skeleton->rightHand().y - skeleton->center().y) > 50
 				&& (skeleton->leftHand().y - skeleton->center().y) < -50) {
 				putText(visualization, "Right Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
-			} else if( (skeleton->leftHand().y - skeleton->center().y) > 50 
+			} else if( (skeleton->leftHand().y - skeleton->center().y) > 50
 				&& (skeleton->rightHand().y - skeleton->center().y) < -50) {
 				putText(visualization, "Left Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
-			}  	
+			}
 		}
 
 		imshow("Visualization", visualization);

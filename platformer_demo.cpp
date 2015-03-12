@@ -11,9 +11,8 @@ int main(int argc, char** argv) {
 	FrameHistory history(stream);
 
 	int minimumArclength = 200;
-	int userSensitivity = 255;
 
-	autoCalibrateSensitivity(&userSensitivity, stream, minimumArclength, 1);
+	int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
 
 	Mat cvMan = imread("cvman.png");
 
@@ -32,7 +31,7 @@ int main(int argc, char** argv) {
 
 		resize(delta, delta, Size(0, 0), 0.1, 0.1);
 		resize(frame, frame, Size(0, 0), 0.1, 0.1);
-		
+
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
 		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
@@ -54,7 +53,7 @@ int main(int argc, char** argv) {
 			 					64, 64);
 
 			Mat roi = output(roi_rect);
-			cvMan.copyTo(roi);			
+			cvMan.copyTo(roi);
 		}
 
 

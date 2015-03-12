@@ -23,7 +23,7 @@ namespace ct {
 			*/
 
 			FrameHistory(cv::VideoCapture& stream);
-			
+
 			/**
 			* Appends the latest frame from the stream to the history;
 			* used to compute motion
@@ -38,7 +38,7 @@ namespace ct {
 			*/
 
 			cv::Mat motion(cv::Mat frame);
-			
+
 			/**
 			* Helper utility to return the last frame added via a call to append
 			*/
@@ -121,27 +121,27 @@ namespace ct {
 		* Position of left hand, magnified accordingly.
 		*/
 		cv::Point2d leftHand() { return magnify(m_leftHand); };
-		
+
 		/**
 		* Position of right hand, magnified accordingly.
 		*/
 		cv::Point2d rightHand() { return magnify(m_rightHand); };
-		
+
 		/**
 		* Position of left leg, magnified accordingly.
 		*/
 		cv::Point2d leftLeg() { return magnify(m_leftLeg); };
-		
+
 		/**
 		* Position of right leg, magnified accordingly.
 		*/
 		cv::Point2d rightLeg() { return magnify(m_rightLeg); };
-		
+
 		/**
 		* Position of center of user's body, magnified accordingly.
 		*/
 		cv::Point2d center() { return magnify(m_center); };
-		
+
 		/**
 		* Position of head magnified accordingly.
 		*/
@@ -187,7 +187,7 @@ namespace ct {
 	*/
 
 	std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList);
-	
+
 	/**
 	* skeletonFromEdgePoints analyzes the output of getEdgePoints to generate a Skeleton object.
 	* Points are classified based on position relative the Skeleton center.
@@ -197,18 +197,19 @@ namespace ct {
 	*/
 
 	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height);
-	
+
 	/**
 	* autoCalibrateSensitivty determines the optimal sensitivity level for extractUserMask.
-	* userSensitivity is a pointer to some initial value (lower is better) for calibration.
+	* initialUserSensitivity is a pointer to the initial sensitivity for calibration.
 	* autoCalibrateSensitivity runs a small portion of the algorithm many times to find the minimum sensitivity.
 	* It assumes that there is no motion to start with to find the setting that yields a blank user mask.
 	* In other words, you must instruct users to completely exit the camera frame before and during this function call.
 	* Else, the algorithm will think that the user itself is noise!
 	* interval is the amount to increase the sensitivity each iteration.
 	* minimumArclength should be equal to the value actually used for getSkeleton.
+	* autoCalibrateSensitivity will return the optimal sensitivity
 	*/
-	void autoCalibrateSensitivity(int* userSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval);
+	int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval);
 
 	/**
 	* getSkeleton exposes a high-level API for performing skeleton tracking.
@@ -221,7 +222,7 @@ namespace ct {
 	* the idea is to minimize the amount of work required to perform tracking
 	* at the expense of accuracy.
 	*/
-	
+
 	std::vector<Skeleton*> getSkeleton
 	(
 		cv::VideoCapture& stream, // webcam stream
