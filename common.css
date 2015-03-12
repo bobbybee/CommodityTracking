@@ -52,3 +52,7 @@ a {
     font-family: monospace;
     background-color: #EEE;
 }
+
+.application {
+    font-style: italic;
+}
