@@ -83,6 +83,9 @@ namespace ct {
 			m_magHeight = 1;
 		}
 
+		void smoothFor(Skeleton* old);
+		void smoothLimb(cv::Point2d* newLimb, cv::Point2d* oldLimb, int thresh);
+
 		/**
 		* Normalizes a given point based on the screen width and height from the constructor
 		*/
@@ -196,7 +199,7 @@ namespace ct {
 	* but in practice only one user works well.
 	*/
 
-	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height);
+	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height);
 
 	/**
 	* autoCalibrateSensitivty determines the optimal sensitivity level for extractUserMask.
@@ -225,6 +228,7 @@ namespace ct {
 
 	std::vector<Skeleton*> getSkeleton
 	(
+		std::vector<Skeleton*> oldSkeletons, // last frame's skeletons
 		cv::VideoCapture& stream, // webcam stream
 		FrameHistory& history, // history for computing delta
 		int userSensitivity, // precalibrated value for thresholding

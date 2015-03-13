@@ -18,8 +18,11 @@ int main(int argc, char** argv) {
 	int minimumArclength = 100;
 	int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
 
+	vector<Skeleton*> oldSkeletons;
+
 	for(;;) {
-		vector<Skeleton*> skeletons = getSkeleton(stream, history, userSensitivity, minimumArclength, 0.1, true);
+		vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, 0.1, true);
+		oldSkeletons = skeletons;
 
 		// visualize skeletons
 		Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);

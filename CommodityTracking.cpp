@@ -3,6 +3,35 @@
 using namespace cv;
 
 namespace ct {
+	void Skeleton::smoothLimb(cv::Point2d* newLimb, cv::Point2d* oldLimb, int thresh) {
+		if(oldLimb->x > 0) {
+			if(newLimb->x == 0) newLimb = oldLimb;
+
+			if(abs(newLimb->x - oldLimb->x) > thresh) {
+				if(newLimb->x > oldLimb->x)
+					newLimb->x -= thresh;
+				else
+					newLimb->x += thresh;
+			}
+
+			if(abs(newLimb->y - oldLimb->y) > thresh) {
+				if(newLimb->y > oldLimb->y)
+					newLimb->y -= thresh;
+				else
+					newLimb->y += thresh;
+			}
+		}
+	}
+
+	void Skeleton::smoothFor(Skeleton* old) {
+		smoothLimb(&old->m_leftHand, &m_leftHand, 4);
+		smoothLimb(&old->m_rightHand, &m_rightHand, 4);
+		smoothLimb(&old->m_leftLeg, &m_leftLeg, 2);
+		smoothLimb(&old->m_rightLeg, &m_rightLeg, 2);
+		smoothLimb(&old->m_center, &m_center, 3);
+		smoothLimb(&old->m_head, &m_head, 3);
+	}
+
 	FrameHistory::FrameHistory(VideoCapture& stream) {
 		stream.read(m_lastFrame); // fixes a race condition in the first few frames
 		stream.read(m_threeFrame); // fixes a race condition in the first few frames
@@ -182,7 +211,7 @@ namespace ct {
 		}
 	}
 
-	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
+	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
 		vector<Skeleton*> skeletons;
 
 		// each center corresponds to a skeleton { mostly }
@@ -235,8 +264,15 @@ namespace ct {
 				  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
 				  head = averagePoints(heads);
 
+			Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
+
+			if(skeleton < history.size()) {
+				Skeleton* old = history[skeleton];
+				skel->smoothFor(old);
+			}
+
 			// populate the skeleton object
-			skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height));
+			skeletons.push_back(skel);
 		}
 
 		return skeletons;
@@ -282,6 +318,7 @@ namespace ct {
 
 	std::vector<Skeleton*> getSkeleton
 	(
+		std::vector<Skeleton*> oldSkeletons,
 		cv::VideoCapture& stream, // webcam stream
 		FrameHistory& history, // history for computing delta
 		int userSensitivity, // precalibrated value for thresholding
@@ -330,6 +367,6 @@ namespace ct {
 		std::vector<std::vector<Point> > edgePointsList;
 		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
 
-		return skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
+		return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
 	}
 };
