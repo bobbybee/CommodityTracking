@@ -6,7 +6,7 @@ CommodityTracking
 Dependencies
 =========
 
-OpenCV must be installed to build CommodityTracking.
+OpenCV must be installed to build CommodityTracking. CommodityTracking has been tested on OpenCV version 2.4.9.
 
 Building
 =========
