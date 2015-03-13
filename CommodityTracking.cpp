@@ -43,13 +43,13 @@ namespace ct {
 		cvtColor(delta, delta, CV_BGR2GRAY);
 
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
-		blur(delta, delta, Size(7, 7), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 60, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+		blur(delta, delta, Size(3, 3), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -304,13 +304,27 @@ namespace ct {
 		Mat delta = history.motion(frame);
 		history.append(frame);
 
+		Mat outMask;
+
+		imshow("Webcam", frame);
+
 		// resize down image to speed up calculations
 		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
 		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
+		resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Delta", outMask);
+
 		// calculate mask
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
+
+		resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Mask", outMask);
+
 		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+
+		resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Simplified Mask", outMask);
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;

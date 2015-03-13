@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 
 	// automatically calibrate userSensitivity
 
-	int minimumArclength = 150;
+	int minimumArclength = 100;
 	int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
 
 	for(;;) {
