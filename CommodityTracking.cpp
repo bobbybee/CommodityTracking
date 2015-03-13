@@ -196,13 +196,13 @@ namespace ct {
 
 				// heads are far above the center: delta Y > threshold
 				// but also close X wise to the center: delta X < threshold
-				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15
-					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 15) {
+				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 8
+					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 10) {
 					heads.push_back(edgePointsList[skeleton][limb]);
 				}
 
 				// legs are far below the center: delta Y > threshold
-				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 12) {
 					// determine which leg is whcih by relative X and push to the respective vector
 
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
@@ -213,7 +213,7 @@ namespace ct {
 				}
 
 				// hands are far to the left or right of the center: abs(delta X) > threshold
-				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
+				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 13 ) {
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
 						rightHands.push_back(edgePointsList[skeleton][limb]);
 					} else {
