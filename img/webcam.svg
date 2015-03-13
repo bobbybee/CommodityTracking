@@ -16,6 +16,51 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="webcam.svg">
+
+   <style>
+    /* <![CDATA[ */
+
+    #light {
+      fill:#008000;
+      -webkit-animation-duration: 1.5s;
+              animation-duration: 1.5s;
+      -webkit-animation-name: blink;
+              animation-name: blink;
+      -webkit-animation-iteration-count: infinite;
+              animation-iteration-count: infinite;
+    }
+
+    @-webkit-keyframes blink {
+      from {
+        fill-opacity: 0%;
+      }
+
+      50% {
+        fill-opacity: 100%;
+      }
+
+      to {
+        fill-opacity: 0%;
+      }
+    }
+
+    @keyframes blink {
+      from {
+        fill-opacity: 0%;
+      }
+
+      50% {
+        fill-opacity: 100%;
+      }
+
+      to {
+        fill-opacity: 0%;
+      }
+    }
+
+    /* ]]> */
+   </style>
+
   <defs
      id="defs4" />
   <sodipodi:namedview

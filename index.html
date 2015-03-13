@@ -3,24 +3,6 @@
 <head>
 	<title>CommodityTracking</title>
 
-    <script>
-    var lightOn = true;
-
-    window.addEventListener("load", function() {
-        setInterval(function() {
-            // blink light by editing SVG itself
-
-            if(lightOn) {
-                document.getElementById("webcam-svg").contentDocument.getElementById("light").style.cssText = "fill: rgb(0, 0, 0);";
-            } else {
-                document.getElementById("webcam-svg").contentDocument.getElementById("light").style.cssText = "fill: rgb(0, 128, 0);";
-            }
-
-            lightOn = !lightOn;
-        }, 1000);
-    });
-    </script>
-
     <link rel="stylesheet" type="text/css" href="common.css">
 </head>
 <body>
