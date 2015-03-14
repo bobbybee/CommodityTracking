@@ -84,8 +84,8 @@ namespace ct {
 		}
 
 		void smoothFor(Skeleton* old);
-		void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh);
-		
+		void smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh);
+
 		/**
 		* Normalizes a given point based on the screen width and height from the constructor
 		*/
