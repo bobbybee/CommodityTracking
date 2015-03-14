@@ -5,7 +5,10 @@ using namespace cv;
 namespace ct {
 	void Skeleton::smoothLimb(cv::Point2d* newLimb, cv::Point2d* oldLimb, int thresh) {
 		if(oldLimb->x > 0) {
-			if(newLimb->x == 0) newLimb = oldLimb;
+			if(newLimb->x < 3 || newLimb->y < 3) {
+				newLimb = oldLimb;
+				return;
+			}
 
 			if(abs(newLimb->x - oldLimb->x) > thresh) {
 				if(newLimb->x > oldLimb->x)
@@ -160,8 +163,8 @@ namespace ct {
 				}
 
 				for(int j = 0; j < contours[i].size(); ++j) {
-					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) ||
-						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
+					if( (contours[i][j].x - topLeft.x < 4) || (bottomRight.x - contours[i][j].x < 4) ||
+						(contours[i][j].y - topLeft.y < 4) || (bottomRight.y - contours[i][j].y < 4)) {
 
 						edgePoints.push_back(contours[i][j]);
 					}
@@ -231,7 +234,7 @@ namespace ct {
 				}
 
 				// legs are far below the center: delta Y > threshold
-				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 12) {
+				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 8) {
 					// determine which leg is whcih by relative X and push to the respective vector
 
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {

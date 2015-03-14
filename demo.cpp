@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
 		oldSkeletons = skeletons;
 
 		// visualize skeletons
-		Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
+		Mat visualization = history.getLastFrame().clone();
+		//Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
 
 		int visWidth = visualization.cols, visHeight = visualization.rows;
 
@@ -35,15 +36,19 @@ int main(int argc, char** argv) {
 
 			// draw limbs and label according to side of body
 
+			line(visualization, skeleton->center(), skeleton->leftHand(), Scalar(255, 255, 255), 5);
 			rectangle(visualization, skeleton->leftHand(), skeleton->leftHand(), Scalar(0, 0, 255), 50);
 			putText(visualization, "L", skeleton->leftHand(), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255));
 
+			line(visualization, skeleton->center(), skeleton->rightHand(), Scalar(255, 255, 255), 5);
 			rectangle(visualization, skeleton->rightHand(), skeleton->rightHand(), Scalar(0, 0, 255), 50);
 			putText(visualization, "R", skeleton->rightHand(), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255));
 
+			line(visualization, skeleton->center(), skeleton->leftLeg(), Scalar(255, 255, 255), 5);
 			rectangle(visualization, skeleton->leftLeg(), skeleton->leftLeg(), Scalar(0, 255, 0), 50);
 			putText(visualization, "L", skeleton->leftLeg(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0));
 
+			line(visualization, skeleton->center(), skeleton->rightLeg(), Scalar(255, 255, 255), 5);
 			rectangle(visualization, skeleton->rightLeg(), skeleton->rightLeg(), Scalar(0, 255, 0), 50);
 			putText(visualization, "R", skeleton->rightLeg(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0));
 
@@ -51,6 +56,7 @@ int main(int argc, char** argv) {
 			rectangle(visualization, skeleton->center(), skeleton->center(), Scalar(255, 255, 0), 50);
 
 			// draw head
+			line(visualization, skeleton->center(), skeleton->head(), Scalar(255, 255, 255), 5);
 			rectangle(visualization, skeleton->head(), skeleton->head(), Scalar(255, 0, 255), 100);
 
 			// check for gestures
