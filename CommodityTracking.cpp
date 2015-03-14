@@ -3,13 +3,14 @@
 using namespace cv;
 
 namespace ct {
-	void Skeleton::smoothLimb(cv::Point2d* newLimb, cv::Point2d* oldLimb, int thresh) {
-		if(oldLimb->x > 0) {
-			if(newLimb->x < 3 || newLimb->y < 3) {
-				newLimb = oldLimb;
-				return;
-			}
+	void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
+		if(newLimb->x == 0 || newLimb->y == 0) {
+			newLimb->x = oldLimb->x;
+			newLimb->y = oldLimb->y;
+			return;
+		}
 
+		if(oldLimb->x > 0) {
 			if(abs(newLimb->x - oldLimb->x) > thresh) {
 				if(newLimb->x > oldLimb->x)
 					newLimb->x -= thresh;
@@ -23,6 +24,8 @@ namespace ct {
 				else
 					newLimb->y += thresh;
 			}
+		} else {
+			std::cout << "OH NO\a\n";
 		}
 	}
 
@@ -32,7 +35,7 @@ namespace ct {
 		smoothLimb(&old->m_leftLeg, &m_leftLeg, 2);
 		smoothLimb(&old->m_rightLeg, &m_rightLeg, 2);
 		smoothLimb(&old->m_center, &m_center, 3);
-		smoothLimb(&old->m_head, &m_head, 3);
+		smoothLimb(&old->m_head, &m_head, 2);
 	}
 
 	FrameHistory::FrameHistory(VideoCapture& stream) {
@@ -229,7 +232,7 @@ namespace ct {
 				// heads are far above the center: delta Y > threshold
 				// but also close X wise to the center: delta X < threshold
 				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 8
-					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 10) {
+					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 4) {
 					heads.push_back(edgePointsList[skeleton][limb]);
 				}
 
