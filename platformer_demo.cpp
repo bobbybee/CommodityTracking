@@ -7,7 +7,7 @@ using namespace cv;
 using namespace ct;
 
 int main(int argc, char** argv) {
-	VideoCapture stream(0);
+	/*VideoCapture stream(0);
 	FrameHistory history(stream);
 
 	int minimumArclength = 200;
@@ -64,10 +64,11 @@ int main(int argc, char** argv) {
 		resize(vis, vis, Size(0, 0), 0.1, 0.1);
 		skeleton.visualize(vis);
 		imshow("Frame (+skeleton)", vis);*/
-
+/*
 		if(waitKey(1) == 27) {
 			break;
 		}
 
 	}
+	*/
 }

@@ -3,6 +3,41 @@
 using namespace cv;
 
 namespace ct {
+	void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
+		if(newLimb->x == 0 || newLimb->y == 0) {
+			newLimb->x = oldLimb->x;
+			newLimb->y = oldLimb->y;
+			return;
+		}
+
+		if(oldLimb->x > 0) {
+			if(abs(newLimb->x - oldLimb->x) > thresh) {
+				if(newLimb->x > oldLimb->x)
+					newLimb->x -= thresh;
+				else
+					newLimb->x += thresh;
+			}
+
+			if(abs(newLimb->y - oldLimb->y) > thresh) {
+				if(newLimb->y > oldLimb->y)
+					newLimb->y -= thresh;
+				else
+					newLimb->y += thresh;
+			}
+		} else {
+			std::cout << "OH NO\a\n";
+		}
+	}
+
+	void Skeleton::smoothFor(Skeleton* old) {
+		smoothLimb(&old->m_leftHand, &m_leftHand, 4);
+		smoothLimb(&old->m_rightHand, &m_rightHand, 4);
+		smoothLimb(&old->m_leftLeg, &m_leftLeg, 2);
+		smoothLimb(&old->m_rightLeg, &m_rightLeg, 2);
+		smoothLimb(&old->m_center, &m_center, 3);
+		smoothLimb(&old->m_head, &m_head, 2);
+	}
+
 	FrameHistory::FrameHistory(VideoCapture& stream) {
 		stream.read(m_lastFrame); // fixes a race condition in the first few frames
 		stream.read(m_threeFrame); // fixes a race condition in the first few frames
@@ -43,13 +78,13 @@ namespace ct {
 		cvtColor(delta, delta, CV_BGR2GRAY);
 
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 24, 255, THRESH_BINARY);
-		blur(delta, delta, Size(7, 7), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 60, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+		blur(delta, delta, Size(3, 3), Point(-1, -1));
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
 
@@ -131,8 +166,8 @@ namespace ct {
 				}
 
 				for(int j = 0; j < contours[i].size(); ++j) {
-					if( (contours[i][j].x - topLeft.x < 3) || (bottomRight.x - contours[i][j].x < 3) ||
-						(contours[i][j].y - topLeft.y < 3) || (bottomRight.y - contours[i][j].y < 3)) {
+					if( (contours[i][j].x - topLeft.x < 4) || (bottomRight.x - contours[i][j].x < 4) ||
+						(contours[i][j].y - topLeft.y < 4) || (bottomRight.y - contours[i][j].y < 4)) {
 
 						edgePoints.push_back(contours[i][j]);
 					}
@@ -182,7 +217,7 @@ namespace ct {
 		}
 	}
 
-	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
+	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
 		vector<Skeleton*> skeletons;
 
 		// each center corresponds to a skeleton { mostly }
@@ -196,13 +231,13 @@ namespace ct {
 
 				// heads are far above the center: delta Y > threshold
 				// but also close X wise to the center: delta X < threshold
-				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 15
-					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 15) {
+				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 8
+					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 4) {
 					heads.push_back(edgePointsList[skeleton][limb]);
 				}
 
 				// legs are far below the center: delta Y > threshold
-				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 20) {
+				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 8) {
 					// determine which leg is whcih by relative X and push to the respective vector
 
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
@@ -213,7 +248,7 @@ namespace ct {
 				}
 
 				// hands are far to the left or right of the center: abs(delta X) > threshold
-				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 20 ) {
+				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 13 ) {
 					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
 						rightHands.push_back(edgePointsList[skeleton][limb]);
 					} else {
@@ -235,8 +270,15 @@ namespace ct {
 				  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
 				  head = averagePoints(heads);
 
+			Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
+
+			if(skeleton < history.size()) {
+				Skeleton* old = history[skeleton];
+				skel->smoothFor(old);
+			}
+
 			// populate the skeleton object
-			skeletons.push_back(new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height));
+			skeletons.push_back(skel);
 		}
 
 		return skeletons;
@@ -282,6 +324,7 @@ namespace ct {
 
 	std::vector<Skeleton*> getSkeleton
 	(
+		std::vector<Skeleton*> oldSkeletons,
 		cv::VideoCapture& stream, // webcam stream
 		FrameHistory& history, // history for computing delta
 		int userSensitivity, // precalibrated value for thresholding
@@ -304,18 +347,32 @@ namespace ct {
 		Mat delta = history.motion(frame);
 		history.append(frame);
 
+		Mat outMask;
+
+		imshow("Webcam", frame);
+
 		// resize down image to speed up calculations
 		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
 		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
+		resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Delta", outMask);
+
 		// calculate mask
 		Mat mask = extractUserMask(delta, userSensitivity / 256);
+
+		resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Mask", outMask);
+
 		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+
+		resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		imshow("Simplified Mask", outMask);
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
 		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
 
-		return skeletonFromEdgePoints(centers, edgePointsList, frame.cols, frame.rows);
+		return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
 	}
 };
