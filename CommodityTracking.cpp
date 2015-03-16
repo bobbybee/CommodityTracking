@@ -4,7 +4,7 @@ using namespace cv;
 
 namespace ct {
 	void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
-		if(newLimb->x == 0 || newLimb->y == 0) {
+		if( (newLimb->x == 0 && oldLimb->x != 0) || (newLimb->y == 0 && oldLimb->y != 0)) {
 			newLimb->x = oldLimb->x;
 			newLimb->y = oldLimb->y;
 			return;
