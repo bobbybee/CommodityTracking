@@ -1,6 +1,8 @@
 CommodityTracking
 =========
 
+[![Join the chat at https://gitter.im/bobbybee/CommodityTracking](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bobbybee/CommodityTracking?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [CommodityTracking](http://bobbybee.github.io/CommodityTracking/) is a library for performing skeleton tracking with only a single, RGB camera, such as those found on many consumer laptops today.
 
 Dependencies
