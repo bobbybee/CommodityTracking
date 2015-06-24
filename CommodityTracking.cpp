@@ -53,7 +53,7 @@ namespace ct {
 	}
 
 	Mat FrameHistory::motion(Mat frame) {
-		Mat out1, out2, out3, out4, delta;
+		/*Mat out1, out2, out3, out4, delta;
 		absdiff(m_twoFrame, frame, out1);
 		absdiff(m_lastFrame, frame, out2);
 		absdiff(m_threeFrame, frame, out3);
@@ -61,7 +61,13 @@ namespace ct {
 
 		bitwise_or(out2, out3, delta);
 		bitwise_or(delta, out1, delta);
-		bitwise_or(delta, out4, delta);
+		bitwise_or(delta, out4, delta);*/
+
+        Mat out1, delta;
+        absdiff(m_twoFrame, frame, out1);
+        absdiff(m_lastFrame, frame, out2);
+
+        bitwise_and(out1, out2, delta);
 
 		return delta;
 	}
