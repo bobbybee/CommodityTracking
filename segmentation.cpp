@@ -64,10 +64,13 @@ int main(int argc, char** argv) {
         Mat test;
         
         markers.convertTo(markers, CV_8U);
-        cvtColor(frame, frame, CV_BGR2GRAY);
-        bitwise_and(frame, markers, test);
+        //cvtColor(frame, frame, CV_BGR2GRAY);
 
-        imshow("Marker Visualization", markers);
+        Mat pureMask = simplifyUserMask(mask, frame, minimumArclength);
+        erode(mask, thin, el);
+
+        bitwise_and(frame, pureMask, test);
+
         imshow("Test", test);
 
         //markers.convertTo(markers, CV_8U);

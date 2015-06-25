@@ -90,10 +90,10 @@ namespace ct {
 		
         imshow("da Maskk", delta);
 
-        blur(delta, delta, Size(2, 2), Point(-1, -1));
+        /*blur(delta, delta, Size(2, 2), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(3, 3), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);*/
         
         imshow("dada Mask2", delta);
 
