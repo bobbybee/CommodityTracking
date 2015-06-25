@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
         Mat mask = extractUserMask(delta, userSensitivity / 256);
         //Mat simplifiedMask = simplifyUserMask(mask, frame, minimumArclength);
 
+        imshow("Mask:", mask);
         // erode the image to remove the edges
         // it doesn't quite matter how much, I don't think
         int erosionAmount = 10;
@@ -44,14 +45,14 @@ int main(int argc, char** argv) {
         Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
 
         Mat thin;
-        erode(mask, thin, el);
+        dilate(mask, thin, el);
 
         cvtColor(thin, thin, CV_BGR2GRAY);
 
         // background
         
-        circle(thin, Point(5,5), 3, CV_RGB(127,127,127), -1);
-        //imshow("Thin", thin);
+        floodFill(thin, Point(0,0), CV_RGB(127,127,127));
+        imshow("Thin", thin);
 
         // watershed!
         
@@ -66,7 +67,8 @@ int main(int argc, char** argv) {
         cvtColor(frame, frame, CV_BGR2GRAY);
         bitwise_and(frame, markers, test);
 
-        //imshow("Test", test);
+        imshow("Marker Visualization", markers);
+        imshow("Test", test);
 
         //markers.convertTo(markers, CV_8U);
 
