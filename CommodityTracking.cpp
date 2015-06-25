@@ -142,7 +142,10 @@ namespace ct {
 
         // provide watershed a background color by running floodFill on the markers
         
-        floodFill(thin, Point(0,0), CV_RGB(127,127,127));
+        floodFill(thin, Point(0, 0), CV_RGB(127,127,127));
+        floodFill(thin, Point(0, thin.rows - 1), CV_RGB(127,127,127));
+        floodFill(thin, Point(thin.cols - 1, 0), CV_RGB(127,127,127));
+        floodFill(thin, Point(thin.cols - 1, thin.rows - 1), CV_RGB(127,127,127));
 
         // run the watershed transform itself
         // watershed operates in the esoteric CV_32S matrix type (signed 32-bit integers)
