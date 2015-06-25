@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 	vector<Skeleton*> oldSkeletons;
 
 	for(;;) {
-		vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, 0.1, true);
+		vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, 0.5, true);
 		oldSkeletons = skeletons;
 
 		// visualize skeletons

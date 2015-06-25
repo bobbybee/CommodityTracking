@@ -63,6 +63,12 @@ namespace ct {
 		bitwise_or(delta, out1, delta);
 		bitwise_or(delta, out4, delta);
 
+        /*Mat out1, out2, delta;
+        absdiff(m_twoFrame, frame, out1);
+        absdiff(m_lastFrame, frame, out2);
+
+        bitwise_or(out1, out2, delta);*/
+
 		return delta;
 	}
 
@@ -77,13 +83,7 @@ namespace ct {
 	cv::Mat extractUserMask(cv::Mat& delta, double sensitivity) {
 		cvtColor(delta, delta, CV_BGR2GRAY);
 
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-		blur(delta, delta, Size(3, 3), Point(-1, -1));
+		blur(delta, delta, Size(4, 4), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
@@ -120,6 +120,69 @@ namespace ct {
 
 		return contourOut;
 	}
+
+    cv::Mat highUserMask(cv::Mat& delta, cv::Mat& frame, int minimumArclength, double sensitivity) {
+        // extract the user mask using delta blur-threshold
+        
+        Mat mask = extractUserMask(delta, sensitivity);
+
+        // dilate the image for the watershed
+        // the image will be eroded an equal amount later,
+        // so the net erosion / dilation is still zero, kind of
+        // but this transform has some useful properties for performing watershed segmentation
+
+        int erosionAmount = 10;
+        Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
+
+        Mat thin;
+        dilate(mask, thin, el);
+
+        cvtColor(thin, thin, CV_BGR2GRAY);
+
+
+        // provide watershed a background color by running floodFill on the markers
+        
+        floodFill(thin, Point(0,0), CV_RGB(127,127,127));
+
+        // run the watershed transform itself
+        // watershed operates in the esoteric CV_32S matrix type (signed 32-bit integers)
+        // this makes sense for watershed; not so much for our image processing
+        // as a result, we simply pad watershed with convertTo calls  (for our sanity)
+        // it is also necessary to convert back to the RGB color space
+
+        Mat markers;
+        
+        thin.convertTo(markers, CV_32S);
+        watershed(frame, markers);
+        markers.convertTo(markers, CV_8U);
+        
+        cvtColor(markers, markers, CV_GRAY2BGR);
+       
+        Mat test;
+
+        // completely cancel out the background
+        // remember, the background at the moment is actually #7F7F7F, a perfect gray
+        // by thresholding the image with #FEFEFE, the grey background will become black,
+        // and as the user was already white,
+        // this threshold creates a perfect (slightly noisy) user mask
+        
+        threshold(markers, markers, 254, 255, THRESH_BINARY);
+
+        // noise reduction is performed by finding the raw contours of the image,
+        // and redrawing them depending on the size
+        // unfortunately, this is an expensive call, but it is well worth it for the results!
+        
+        Mat pureMask = simplifyUserMask(markers, frame, minimumArclength);
+
+        // finally, the original dilate call causes this "fatness" illusion on the mask
+        // by eroding the mask by the same amount of the dilation, the mask becomes much more tight
+        
+        erode(pureMask, pureMask, el);
+
+        // let the calling application / CT function work with the mask as desired
+        
+        return pureMask;
+    }
 
 	std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
 		Mat edges;
@@ -355,23 +418,26 @@ namespace ct {
 		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
 		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
-		resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Delta", outMask);
+		//resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Delta", outMask);
 
-		// calculate mask
-		Mat mask = extractUserMask(delta, userSensitivity / 256);
+		//resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Mask", outMask);
 
-		resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Mask", outMask);
+		//Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+		//resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Simplified Mask", outMask);
 
-		resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Simplified Mask", outMask);
+        // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
+        
+        Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
+
+        imshow("High-level mask", mask);
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
+		centers = getEdgePoints(frame, mask, minimumArclength, true, edgePointsList);
 
 		return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
 	}
