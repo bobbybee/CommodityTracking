@@ -53,7 +53,7 @@ namespace ct {
 	}
 
 	Mat FrameHistory::motion(Mat frame) {
-		/*Mat out1, out2, out3, out4, delta;
+		Mat out1, out2, out3, out4, delta;
 		absdiff(m_twoFrame, frame, out1);
 		absdiff(m_lastFrame, frame, out2);
 		absdiff(m_threeFrame, frame, out3);
@@ -61,13 +61,13 @@ namespace ct {
 
 		bitwise_or(out2, out3, delta);
 		bitwise_or(delta, out1, delta);
-		bitwise_or(delta, out4, delta);*/
+		bitwise_or(delta, out4, delta);
 
-        Mat out1, out2, delta;
+        /*Mat out1, out2, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
 
-        bitwise_and(out1, out2, delta);
+        bitwise_or(out1, out2, delta);*/
 
 		return delta;
 	}
@@ -83,7 +83,7 @@ namespace ct {
 	cv::Mat extractUserMask(cv::Mat& delta, double sensitivity) {
 		cvtColor(delta, delta, CV_BGR2GRAY);
 
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
+		blur(delta, delta, Size(4, 4), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
@@ -125,7 +125,7 @@ namespace ct {
         // extract the user mask using delta blur-threshold
         
         Mat mask = extractUserMask(delta, sensitivity);
-         
+
         // dilate the image for the watershed
         // the image will be eroded an equal amount later,
         // so the net erosion / dilation is still zero, kind of
@@ -138,6 +138,7 @@ namespace ct {
         dilate(mask, thin, el);
 
         cvtColor(thin, thin, CV_BGR2GRAY);
+
 
         // provide watershed a background color by running floodFill on the markers
         
