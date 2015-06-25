@@ -63,7 +63,7 @@ namespace ct {
 		bitwise_or(delta, out1, delta);
 		bitwise_or(delta, out4, delta);*/
 
-        Mat out1, delta;
+        Mat out1, out2, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
 
@@ -87,10 +87,14 @@ namespace ct {
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
+		
+        imshow("Maskk", delta);
+
+        blur(delta, delta, Size(2, 2), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(3, 3), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+        imshow("Mask2", delta);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
 

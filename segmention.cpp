@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 	
     int minimumArclength = 100;
 	int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
- 
+
     for(;;) {
         // main loop
         // fetch an image from the camera
@@ -35,23 +35,49 @@ int main(int argc, char** argv) {
 
         // extract the user mask
         Mat mask = extractUserMask(delta, userSensitivity / 256);
-        Mat simplifiedMask = simplifyUserMask(mask, frame, minimumArclength);
+        //Mat simplifiedMask = simplifyUserMask(mask, frame, minimumArclength);
 
-        // erosion the image to remove the edges
+        // erode the image to remove the edges
         // it doesn't quite matter how much, I don't think
-        int erosionAmount = 5;
+        int erosionAmount = 10;
 
         Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
 
         Mat thin;
-        erode(simplifiedMask, thin, el);
+        erode(mask, thin, el);
+
+        cvtColor(thin, thin, CV_BGR2GRAY);
+
+        // background
+        
+        circle(thin, Point(5,5), 3, CV_RGB(127,127,127), -1);
+        //imshow("Thin", thin);
+
+        // watershed!
+        
+        Mat markers;
+        thin.convertTo(markers, CV_32S);
+
+        watershed(frame, markers);
+        
+        Mat test;
+        
+        markers.convertTo(markers, CV_8U);
+        cvtColor(frame, frame, CV_BGR2GRAY);
+        bitwise_and(frame, markers, test);
+
+        //imshow("Test", test);
+
+        //markers.convertTo(markers, CV_8U);
+
+        //imshow("Markers", markers);
 
         // AND against the original frame simply for testing purporses
 
-        Mat test;
-        bitwise_and(thin, frame, test);
+        //Mat test;
+        //bitwise_and(thin, frame, test);
 
-        imshow("Delta", test);
+        //imshow("Delta", test);
 
         if(waitKey(10) == 27) {
             break;
