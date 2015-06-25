@@ -182,7 +182,18 @@ namespace ct {
 
 	cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength);
 
-	/**
+    /**
+     * highUserMask implements watershed segmentation
+     * it internally leverages simplifyUserMask and extractUserMaskfor its input,
+     * and manages all of the pre/post processing needed for watershed itself
+     * highUserMask provides a very high-level, one-size-fits-all solution for user mask extraction,
+     * and is therefore used by CommodityTracking itself.
+     * additionally, it is useful for general motion-based segmentation algorithms
+     */
+
+    cv::Mat highUserMask(cv::Mat& delta, cv::Mat& frame, int minimumArclength, double sensitivity);
+	
+    /**
 	* getEdgePoints returns a list of "interesting" points from a user mask.
 	* It returns center points (later fed to Skeleton::center ),
 	* and returns edge points by reference as the last parameter.

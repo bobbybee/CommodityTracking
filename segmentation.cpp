@@ -33,75 +33,22 @@ int main(int argc, char** argv) {
         Mat delta = history.motion(frame);
         history.append(frame);
 
-        // extract the user mask
-        Mat mask = extractUserMask(delta, userSensitivity / 256);
-         
-        // dilate the image for the watershed
-        // the image will be eroded an equal amount later,
-        // so the net erosion / dilation is still zero, kind of
-        // but this transform has some useful properties for performing watershed segmentation
-
-        int erosionAmount = 10;
-        Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
-
-        Mat thin;
-        dilate(mask, thin, el);
-
-        cvtColor(thin, thin, CV_BGR2GRAY);
-
-        // provide watershed a background color by running floodFIll on the markers
-        
-        floodFill(thin, Point(0,0), CV_RGB(127,127,127));
-
-        // run the watershed transform itself
-        // watershed operates in the esoteric CV_32S matrix type (signed 32-bit integers)
-        // this makes sense for watershed; not so much for our image processing
-        // as a result, we simply pad watershed with convertTo calls  (for our sanity)
-        // it is also necessary to convert back to the RGB color space
-
-        Mat markers;
-        
-        thin.convertTo(markers, CV_32S);
-        watershed(frame, markers);
-        markers.convertTo(markers, CV_8U);
-        
-        cvtColor(markers, markers, CV_GRAY2BGR);
-       
-        Mat test;
-
-        // completely cancel out the background
-        // remember, the background at the moment is actually #7F7F7F, a perfect gray
-        // by thresholding the image with #FEFEFE, the grey background will become black,
-        // and as the user was already white,
-        // this threshold creates a perfect (slightly noisy) user mask
-        
-        threshold(markers, markers, 254, 255, THRESH_BINARY);
-
-        // noise reduction is performed by finding the raw contours of the image,
-        // and redrawing them depending on the size
-        // unfortunately, this is an expensive call, but it is well worth it for the results!
-        
-        Mat pureMask = simplifyUserMask(markers, frame, minimumArclength);
-
-        // finally, the original dilate call causes this "fatness" illusion on the mask
-        // by eroding the mask by the same amount of the dilation, the mask becomes much more tight
-        
-        erode(pureMask, pureMask, el);
+        Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
 
         // visualization:
         // display the mask in and of itself is interesting
         
-        imshow("Spotless user mask", pureMask);
+        imshow("Spotless user mask", mask);
         
         // but a binary mask ANDed with the original frame
         // is just cropping the image.
         // automatic motion-based cropping for the win!
 
-        bitwise_and(frame, pureMask, test);
+        Mat test;
+        bitwise_and(frame, mask, test);
         imshow("Auto-cropped user", test);
 
-
-        if(waitKey(10) == 27) {
+        if(waitKey(20) == 27) {
             break;
         }
     }
