@@ -418,23 +418,26 @@ namespace ct {
 		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
 		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
-		resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Delta", outMask);
+		//resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Delta", outMask);
 
-		// calculate mask
-		Mat mask = extractUserMask(delta, userSensitivity / 256);
+		//resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Mask", outMask);
 
-		resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Mask", outMask);
+		//Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-		Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+		//resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+		//imshow("Simplified Mask", outMask);
 
-		resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		imshow("Simplified Mask", outMask);
+        // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
+        
+        Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
+
+        imshow("High-level mask", mask);
 
 		std::vector<Point> centers;
 		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, simplifiedUserMask, minimumArclength, true, edgePointsList);
+		centers = getEdgePoints(frame, mask, minimumArclength, true, edgePointsList);
 
 		return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
 	}
