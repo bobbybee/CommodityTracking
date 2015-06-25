@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
         // background
         
         floodFill(thin, Point(0,0), CV_RGB(127,127,127));
-        imshow("Thin", thin);
 
         // watershed!
         
@@ -60,29 +59,25 @@ int main(int argc, char** argv) {
         thin.convertTo(markers, CV_32S);
 
         watershed(frame, markers);
-        
+       
+
         Mat test;
         
         markers.convertTo(markers, CV_8U);
+        cvtColor(markers, markers, CV_GRAY2BGR);
+
+        // completely cancel out the background
+        threshold(markers, markers, 254, 255, THRESH_BINARY);
+
+        imshow("Mark", markers);
         //cvtColor(frame, frame, CV_BGR2GRAY);
 
-        Mat pureMask = simplifyUserMask(mask, frame, minimumArclength);
-        erode(mask, thin, el);
+        Mat pureMask = simplifyUserMask(markers, frame, minimumArclength);
+        erode(pureMask, pureMask, el);
 
         bitwise_and(frame, pureMask, test);
 
         imshow("Test", test);
-
-        //markers.convertTo(markers, CV_8U);
-
-        //imshow("Markers", markers);
-
-        // AND against the original frame simply for testing purporses
-
-        //Mat test;
-        //bitwise_and(thin, frame, test);
-
-        //imshow("Delta", test);
 
         if(waitKey(10) == 27) {
             break;

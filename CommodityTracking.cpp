@@ -85,17 +85,17 @@ namespace ct {
 
 		blur(delta, delta, Size(2, 2), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
-		blur(delta, delta, Size(2, 2), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+		//blur(delta, delta, Size(2, 2), Point(-1, -1));
+		//threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		
-        imshow("da Maskk", delta);
+        //imshow("da Maskk", delta);
 
         /*blur(delta, delta, Size(2, 2), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 		blur(delta, delta, Size(3, 3), Point(-1, -1));
 		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);*/
         
-        imshow("dada Mask2", delta);
+        //imshow("dada Mask2", delta);
 
 		cvtColor(delta, delta, CV_GRAY2BGR);
 
