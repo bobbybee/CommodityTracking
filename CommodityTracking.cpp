@@ -260,7 +260,6 @@ namespace ct {
         }
 
         if(draw) {
-            resize(contourOut, contourOut, Size(0, 0), 3, 3);
             imshow("Edge Point Sketch", contourOut);
         }
 
@@ -448,25 +447,11 @@ namespace ct {
 
         Mat outMask;
 
-        imshow("Webcam", frame);
-
         // resize down image to speed up calculations
         resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
         resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
-        //resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-        //imshow("Delta", outMask);
-
-        //resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-        //imshow("Mask", outMask);
-
-        //Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
-
-        //resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-        //imshow("Simplified Mask", outMask);
-
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
-        
         Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
 
         imshow("High-level mask", mask);
