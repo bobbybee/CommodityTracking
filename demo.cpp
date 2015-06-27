@@ -13,10 +13,8 @@ int main(int argc, char** argv) {
     VideoCapture stream(0);
     FrameHistory history(stream);
 
-    // automatically calibrate userSensitivity
-
     int minimumArclength = 100;
-    int userSensitivity = autoCalibrateSensitivity(256, stream, minimumArclength, 1);
+    int userSensitivity = 256; 
 
     vector<Skeleton*> oldSkeletons;
 
