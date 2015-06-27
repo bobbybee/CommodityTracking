@@ -266,23 +266,6 @@ namespace ct {
         return centers;
     }
 
-    // computes the mean of a vector of Point's
-
-    static Point averagePoints(std::vector<Point> points) {
-        if(points.size()) {
-            int sumX = 0, sumY = 0;
-
-            for(int i = 0; i < points.size(); ++i) {
-                sumX += points[i].x;
-                sumY += points[i].y;
-            }
-
-            return Point(sumX / points.size(), sumY / points.size());
-        } else {
-            return Point(0, 0);
-        }
-    }
-
     // iterates through the haystack, runs the scoring function, and returns the highest scorer
     
     static Point findLimb(std::vector<Point>& haystack, cv::Point center, std::function<double(cv::Point, cv::Point)> scorer ) {
