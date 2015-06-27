@@ -437,11 +437,9 @@ namespace ct {
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
         Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
 
-        imshow("High-level mask", mask);
-
         std::vector<Point> centers;
         std::vector<std::vector<Point> > edgePointsList;
-        centers = getEdgePoints(frame, mask, minimumArclength, true, edgePointsList);
+        centers = getEdgePoints(frame, mask, minimumArclength, false, edgePointsList);
 
         return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
     }
