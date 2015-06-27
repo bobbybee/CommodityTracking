@@ -8,13 +8,13 @@ ifeq ($(shell uname),Darwin)
 endif
 
 ifeq ($(shell uname),Linux)
-	LIBRARY_CLEAN += rm libcommoditytracking.a
+	LIBRARY_CLEAN += - rm libcommoditytracking.a
 	LIBRARY_BUILD_ARGS += ar -cvq libcommoditytracking.a *.o
 	LINKLIB = -L '.' libcommoditytracking.a
 endif
 
 all:
-	g++ -o CommodityTracking.o -c -fPIC CommodityTracking.cpp -O3
+	g++ -o CommodityTracking.o -c -fPIC CommodityTracking.cpp -O3 --std=c++11
 
 	$(LIBRARY_CLEAN)
 	$(LIBRARY_BUILD_ARGS)

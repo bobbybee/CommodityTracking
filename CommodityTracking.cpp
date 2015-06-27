@@ -1,4 +1,5 @@
 #include "CommodityTracking.h"
+#include <functional>
 
 using namespace cv;
 
@@ -286,13 +287,13 @@ namespace ct {
     // iterates through the haystack, runs the scoring function, and returns the highest scorer
     
     static Point findLimb(std::vector<Point>& haystack, cv::Point center, std::function<double(cv::Point, cv::Point)> scorer ) {
-        if(haystack.size() == 0) return null;
+        if(haystack.size() == 0) return Point(0, 0); // equivalent of returning null
         
         double maxScore = 0; // maintain a running max
         int maxScoreIndex = 0; 
         
         for(int i = 0; i < haystack.size(); ++i) {
-            double score = scorer(cetner, haystack[i]);
+            double score = scorer(center, haystack[i]);
 
             if(score > maxScore) {
                 maxScore = score;
@@ -319,11 +320,24 @@ namespace ct {
                  );
     }
 
-    static double scoreLeftArm(cv::Point center, cv::Point point) {
-       return (alpha * (center.x - point.x)) + (center.y - point.y);
+    static double scoreLeftHand(cv::Point center, cv::Point point) {
+        double alpha = 1.5;
+        return (alpha * (center.x - point.x)) + (center.y - point.y);
     }
 
+    static double scoreRightHand(cv::Point center, cv::Point point) {
+        double alpha = 1.5;
+        return (alpha * (point.x - center.x)) + (center.y - point.y);
+    }
 
+    static double scoreLeftLeg(cv::Point center, cv::Point point) {
+        double alpha = 1.5;
+        return (alpha * (center.x - point.x)) + (point.y - center.y);
+    }
+
+    static double scoreRightLeg(cv::Point center, cv::Point point) {
+        double alpha = 1.5;
+        return (alpha * (point.x - center.x)) + (point.y - center.y);
     }
 
 	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
@@ -346,11 +360,11 @@ namespace ct {
            
             // we'll pass these off to other functions 
    
-            head = findLimb(edgePointsList[skeleton], scoreHead);
-            leftHand = findLimb(edgePointsList[skeleton], scoreLeftHand);
-            rightHand = findLimb(edgePointsList[skeleton], scoreRightHand);
-            leftLeg = findLimb(edgePointsList[skeleton], scoreLeftLeg);
-            rightLeg = findLimb(edgePointsList[skeleton], scoreRightLeg);
+            head = findLimb(edgePointsList[skeleton], centers[skeleton], scoreHead);
+            leftHand = findLimb(edgePointsList[skeleton], centers[skeleton], scoreLeftHand);
+            rightHand = findLimb(edgePointsList[skeleton], centers[skeleton], scoreRightHand);
+            leftLeg = findLimb(edgePointsList[skeleton], centers[skeleton], scoreLeftLeg);
+            rightLeg = findLimb(edgePointsList[skeleton], centers[skeleton], scoreRightLeg);
 
 			Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
 
