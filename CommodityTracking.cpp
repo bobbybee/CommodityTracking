@@ -10,7 +10,7 @@ namespace ct {
 			return;
 		}
 
-		if(oldLimb->x > 0) {
+		if(oldLimb->x > 0 && oldLimb->y > 0) {
 			if(abs(newLimb->x - oldLimb->x) > thresh) {
 				if(newLimb->x > oldLimb->x)
 					newLimb->x -= thresh;
@@ -297,7 +297,7 @@ namespace ct {
 
 				// heads are far above the center: delta Y > threshold
 				// but also close X wise to the center: delta X < threshold
-				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 8
+				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 7
 					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 4) {
 					heads.push_back(edgePointsList[skeleton][limb]);
 				}
