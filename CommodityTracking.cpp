@@ -4,65 +4,65 @@
 using namespace cv;
 
 namespace ct {
-	void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
-		if( (newLimb->x == 0 && oldLimb->x != 0) || (newLimb->y == 0 && oldLimb->y != 0)) {
-			newLimb->x = oldLimb->x;
-			newLimb->y = oldLimb->y;
-			return;
-		}
+    void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
+        if( (newLimb->x == 0 && oldLimb->x != 0) || (newLimb->y == 0 && oldLimb->y != 0)) {
+            newLimb->x = oldLimb->x;
+            newLimb->y = oldLimb->y;
+            return;
+        }
 
-		if(oldLimb->x > 0 && oldLimb->y > 0) {
-			if(abs(newLimb->x - oldLimb->x) > thresh) {
-				if(newLimb->x > oldLimb->x)
-					newLimb->x -= thresh;
-				else
-					newLimb->x += thresh;
-			}
+        if(oldLimb->x > 0 && oldLimb->y > 0) {
+            if(abs(newLimb->x - oldLimb->x) > thresh) {
+                if(newLimb->x > oldLimb->x)
+                    newLimb->x -= thresh;
+                else
+                    newLimb->x += thresh;
+            }
 
-			if(abs(newLimb->y - oldLimb->y) > thresh) {
-				if(newLimb->y > oldLimb->y)
-					newLimb->y -= thresh;
-				else
-					newLimb->y += thresh;
-			}
-		} else {
-			std::cout << "OH NO\a\n";
-		}
-	}
+            if(abs(newLimb->y - oldLimb->y) > thresh) {
+                if(newLimb->y > oldLimb->y)
+                    newLimb->y -= thresh;
+                else
+                    newLimb->y += thresh;
+            }
+        } else {
+            std::cout << "OH NO\a\n";
+        }
+    }
 
-	void Skeleton::smoothFor(Skeleton* old) {
-		smoothLimb(&old->m_leftHand, &m_leftHand, 4);
-		smoothLimb(&old->m_rightHand, &m_rightHand, 4);
-		smoothLimb(&old->m_leftLeg, &m_leftLeg, 2);
-		smoothLimb(&old->m_rightLeg, &m_rightLeg, 2);
-		smoothLimb(&old->m_center, &m_center, 3);
-		smoothLimb(&old->m_head, &m_head, 2);
-	}
+    void Skeleton::smoothFor(Skeleton* old) {
+        smoothLimb(&old->m_leftHand, &m_leftHand, 4);
+        smoothLimb(&old->m_rightHand, &m_rightHand, 4);
+        smoothLimb(&old->m_leftLeg, &m_leftLeg, 2);
+        smoothLimb(&old->m_rightLeg, &m_rightLeg, 2);
+        smoothLimb(&old->m_center, &m_center, 3);
+        smoothLimb(&old->m_head, &m_head, 2);
+    }
 
-	FrameHistory::FrameHistory(VideoCapture& stream) {
-		stream.read(m_lastFrame); // fixes a race condition in the first few frames
-		stream.read(m_threeFrame); // fixes a race condition in the first few frames
-		stream.read(m_twoFrame);
-		stream.read(m_fourFrame);
-	}
+    FrameHistory::FrameHistory(VideoCapture& stream) {
+        stream.read(m_lastFrame); // fixes a race condition in the first few frames
+        stream.read(m_threeFrame); // fixes a race condition in the first few frames
+        stream.read(m_twoFrame);
+        stream.read(m_fourFrame);
+    }
 
-	void FrameHistory::append(Mat frame) {
-		m_fourFrame = m_threeFrame;
-		m_threeFrame = m_twoFrame;
-		m_twoFrame = m_lastFrame;
-		m_lastFrame = frame;
-	}
+    void FrameHistory::append(Mat frame) {
+        m_fourFrame = m_threeFrame;
+        m_threeFrame = m_twoFrame;
+        m_twoFrame = m_lastFrame;
+        m_lastFrame = frame;
+    }
 
-	Mat FrameHistory::motion(Mat frame) {
-		Mat out1, out2, out3, out4, delta;
-		absdiff(m_twoFrame, frame, out1);
-		absdiff(m_lastFrame, frame, out2);
-		absdiff(m_threeFrame, frame, out3);
-		absdiff(m_fourFrame, frame, out4);
+    Mat FrameHistory::motion(Mat frame) {
+        Mat out1, out2, out3, out4, delta;
+        absdiff(m_twoFrame, frame, out1);
+        absdiff(m_lastFrame, frame, out2);
+        absdiff(m_threeFrame, frame, out3);
+        absdiff(m_fourFrame, frame, out4);
 
-		bitwise_or(out2, out3, delta);
-		bitwise_or(delta, out1, delta);
-		bitwise_or(delta, out4, delta);
+        bitwise_or(out2, out3, delta);
+        bitwise_or(delta, out1, delta);
+        bitwise_or(delta, out4, delta);
 
         /*Mat out1, out2, delta;
         absdiff(m_twoFrame, frame, out1);
@@ -70,57 +70,57 @@ namespace ct {
 
         bitwise_or(out1, out2, delta);*/
 
-		return delta;
-	}
+        return delta;
+    }
 
-	Mat FrameHistory::getLastFrame() {
-		return m_lastFrame;
-	}
+    Mat FrameHistory::getLastFrame() {
+        return m_lastFrame;
+    }
 
-	// the black-and-white user mask is found from
-	// the motion extracted image through a series
-	// of various blurs and corresponding thresholds
+    // the black-and-white user mask is found from
+    // the motion extracted image through a series
+    // of various blurs and corresponding thresholds
 
-	cv::Mat extractUserMask(cv::Mat& delta, double sensitivity) {
-		cvtColor(delta, delta, CV_BGR2GRAY);
+    cv::Mat extractUserMask(cv::Mat& delta, double sensitivity) {
+        cvtColor(delta, delta, CV_BGR2GRAY);
 
-		blur(delta, delta, Size(4, 4), Point(-1, -1));
-		threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
+        blur(delta, delta, Size(4, 4), Point(-1, -1));
+        threshold(delta, delta, sensitivity * 20, 255, THRESH_BINARY);
 
-		cvtColor(delta, delta, CV_GRAY2BGR);
+        cvtColor(delta, delta, CV_GRAY2BGR);
 
-		return delta;
-	}
+        return delta;
+    }
 
-	// NOTE: may trash original mask. clone if preservation is needed
-	cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength) {
-		// prepare for Canny + contour detection
-		cvtColor(mask, mask, CV_BGR2GRAY);
+    // NOTE: may trash original mask. clone if preservation is needed
+    cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength) {
+        // prepare for Canny + contour detection
+        cvtColor(mask, mask, CV_BGR2GRAY);
 
-		vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
+        vector<vector<Point> > contours;
+        vector<Vec4i> hierarchy;
 
-		// extract edges using Canny
-		Mat edges;
-		Canny(mask, edges, 20, 20 * 3, 3);
+        // extract edges using Canny
+        Mat edges;
+        Canny(mask, edges, 20, 20 * 3, 3);
 
-		cvtColor(edges, edges, CV_GRAY2BGR);
+        cvtColor(edges, edges, CV_GRAY2BGR);
 
-		// find contours, simplify and draw large contours to contourOut
-		Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
-		findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+        // find contours, simplify and draw large contours to contourOut
+        Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
+        findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-			approxPolyDP(contours[i], contours[i], t_arcLength * 0.005, true);
+        for(int i = 0; i < contours.size(); ++i) {
+            double t_arcLength = arcLength(Mat(contours[i]), true);
+            approxPolyDP(contours[i], contours[i], t_arcLength * 0.005, true);
 
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-				drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
-			}
-		}
+            if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+                drawContours(contourOut, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+            }
+        }
 
-		return contourOut;
-	}
+        return contourOut;
+    }
 
     cv::Mat highUserMask(cv::Mat& delta, cv::Mat& frame, int minimumArclength, double sensitivity) {
         // extract the user mask using delta blur-threshold
@@ -188,101 +188,101 @@ namespace ct {
         return pureMask;
     }
 
-	std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
-		Mat edges;
-		Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
+    std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
+        Mat edges;
+        Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
 
-		vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
+        vector<vector<Point> > contours;
+        vector<Vec4i> hierarchy;
 
-		Mat contourOut;
+        Mat contourOut;
 
-		if(draw)
-			contourOut = Mat::zeros(frame.size(), CV_8UC3);
+        if(draw)
+            contourOut = Mat::zeros(frame.size(), CV_8UC3);
 
-		findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+        findContours(edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-		vector<Point> centers;
+        vector<Point> centers;
 
-		for(int i = 0; i < contours.size(); ++i) {
-			double t_arcLength = arcLength(Mat(contours[i]), true);
-			//approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
+        for(int i = 0; i < contours.size(); ++i) {
+            double t_arcLength = arcLength(Mat(contours[i]), true);
+            //approxPolyDP(contours[i], contours[i], t_arcLength * 0.015, true);
 
-			if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
-				if(draw)
-					drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
+            if(t_arcLength > minimumArclength) { // remove tiny contours.. don't waste your time
+                if(draw)
+                    drawContours(contourOut, contours, i, Scalar(255, 255, 255), 1, 8, hierarchy, 0, Point()); // CV_FILLED produces filled contours to act as a mask
 
-				int averageX = 0, averageY = 0, n = 0;
-				Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
-				vector<Point> edgePoints;
+                int averageX = 0, averageY = 0, n = 0;
+                Point topLeft(edges.rows, edges.cols), bottomRight(0, 0);
+                vector<Point> edgePoints;
 
-				for(int j = 0; j < contours[i].size(); ++j) {
-					++n;
-					averageX += contours[i][j].x;
-					averageY += contours[i][j].y;
+                for(int j = 0; j < contours[i].size(); ++j) {
+                    ++n;
+                    averageX += contours[i][j].x;
+                    averageY += contours[i][j].y;
 
-					if(contours[i][j].x < topLeft.x)
-						topLeft.x = contours[i][j].x;
-					if(contours[i][j].y < topLeft.y )
-						topLeft.y = contours[i][j].y;
+                    if(contours[i][j].x < topLeft.x)
+                        topLeft.x = contours[i][j].x;
+                    if(contours[i][j].y < topLeft.y )
+                        topLeft.y = contours[i][j].y;
 
-					if(contours[i][j].x > bottomRight.x)
-						bottomRight.x = contours[i][j].x;
-					if(contours[i][j].y > bottomRight.y)
-						bottomRight.y = contours[i][j].y;
-				}
+                    if(contours[i][j].x > bottomRight.x)
+                        bottomRight.x = contours[i][j].x;
+                    if(contours[i][j].y > bottomRight.y)
+                        bottomRight.y = contours[i][j].y;
+                }
 
-				for(int j = 0; j < contours[i].size(); ++j) {
-					if( (contours[i][j].x - topLeft.x < 4) || (bottomRight.x - contours[i][j].x < 4) ||
-						(contours[i][j].y - topLeft.y < 4) || (bottomRight.y - contours[i][j].y < 4)) {
+                for(int j = 0; j < contours[i].size(); ++j) {
+                    if( (contours[i][j].x - topLeft.x < 4) || (bottomRight.x - contours[i][j].x < 4) ||
+                        (contours[i][j].y - topLeft.y < 4) || (bottomRight.y - contours[i][j].y < 4)) {
 
-						edgePoints.push_back(contours[i][j]);
-					}
-				}
+                        edgePoints.push_back(contours[i][j]);
+                    }
+                }
 
-				averageX /= n;
-				averageY /= n;
+                averageX /= n;
+                averageY /= n;
 
-				centers.push_back(Point(averageX, averageY));
+                centers.push_back(Point(averageX, averageY));
 
-				if(draw)
-					rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
+                if(draw)
+                    rectangle(contourOut, Point(averageX, averageY), Point(averageX, averageY), Scalar(255, 0, 0), 5);
 
-				if(draw) {
-					for(int i = 0; i < edgePoints.size(); ++i) {
-						rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
-					}
-				}
+                if(draw) {
+                    for(int i = 0; i < edgePoints.size(); ++i) {
+                        rectangle(contourOut, edgePoints[i], edgePoints[i], Scalar(0, 255, 0), 5);
+                    }
+                }
 
-				edgePointsList.push_back(edgePoints);
+                edgePointsList.push_back(edgePoints);
 
-			}
-		}
+            }
+        }
 
-		if(draw) {
-			resize(contourOut, contourOut, Size(0, 0), 3, 3);
-			imshow("Edge Point Sketch", contourOut);
-		}
+        if(draw) {
+            resize(contourOut, contourOut, Size(0, 0), 3, 3);
+            imshow("Edge Point Sketch", contourOut);
+        }
 
-		return centers;
-	}
+        return centers;
+    }
 
-	// computes the mean of a vector of Point's
+    // computes the mean of a vector of Point's
 
-	static Point averagePoints(std::vector<Point> points) {
-		if(points.size()) {
-			int sumX = 0, sumY = 0;
+    static Point averagePoints(std::vector<Point> points) {
+        if(points.size()) {
+            int sumX = 0, sumY = 0;
 
-			for(int i = 0; i < points.size(); ++i) {
-				sumX += points[i].x;
-				sumY += points[i].y;
-			}
+            for(int i = 0; i < points.size(); ++i) {
+                sumX += points[i].x;
+                sumY += points[i].y;
+            }
 
-			return Point(sumX / points.size(), sumY / points.size());
-		} else {
-			return Point(0, 0);
-		}
-	}
+            return Point(sumX / points.size(), sumY / points.size());
+        } else {
+            return Point(0, 0);
+        }
+    }
 
     // iterates through the haystack, runs the scoring function, and returns the highest scorer
     
@@ -343,11 +343,11 @@ namespace ct {
         return (alpha * (point.x - center.x)) + (beta * (point.y - center.y));
     }
 
-	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
-		vector<Skeleton*> skeletons;
+    std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
+        vector<Skeleton*> skeletons;
 
-		// each center corresponds to a skeleton { mostly }
-		for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
+        // each center corresponds to a skeleton { mostly }
+        for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
             // the actual limb calculations are done outside of this function
 
             Point head, leftHand, rightHand, leftLeg, rightLeg;
@@ -369,101 +369,101 @@ namespace ct {
             leftLeg = findLimb(edgePointsList[skeleton], centers[skeleton], scoreLeftLeg);
             rightLeg = findLimb(edgePointsList[skeleton], centers[skeleton], scoreRightLeg);
 
-			Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
+            Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
 
-			if(skeleton < history.size()) {
-				Skeleton* old = history[skeleton];
-				skel->smoothFor(old);
-			}
+            if(skeleton < history.size()) {
+                Skeleton* old = history[skeleton];
+                skel->smoothFor(old);
+            }
 
-			// populate the skeleton object
-			skeletons.push_back(skel);
-		}
+            // populate the skeleton object
+            skeletons.push_back(skel);
+        }
 
-		return skeletons;
-	}
+        return skeletons;
+    }
 
-	// auto-calibration works by running a trivial part of the actual code;
-	// it's main body is derived from the demo itself
-	// however, it is constantly changing its sensitivity parameter
-	// in order to minimize noise without compromising flexibility
+    // auto-calibration works by running a trivial part of the actual code;
+    // it's main body is derived from the demo itself
+    // however, it is constantly changing its sensitivity parameter
+    // in order to minimize noise without compromising flexibility
 
-	int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
-		FrameHistory history(stream);
-		int sensitivity = initialUserSensitivity;
+    int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
+        FrameHistory history(stream);
+        int sensitivity = initialUserSensitivity;
 
-		while(sensitivity < 1000) {
-			Mat frame;
-			stream.read(frame);
+        while(sensitivity < 1000) {
+            Mat frame;
+            stream.read(frame);
 
-			Mat delta = history.motion(frame);
-			history.append(frame);
+            Mat delta = history.motion(frame);
+            history.append(frame);
 
-			Mat mask = extractUserMask(delta, sensitivity / 256);
-			Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+            Mat mask = extractUserMask(delta, sensitivity / 256);
+            Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-			sensitivity += interval;
+            sensitivity += interval;
 
-			cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
+            cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
 
-			if(countNonZero(simplifiedUserMask) == 0) {
-				// optimal calibration found, but make it a bit more sensitive than needed
-				// noise fluctuates massively, after all
+            if(countNonZero(simplifiedUserMask) == 0) {
+                // optimal calibration found, but make it a bit more sensitive than needed
+                // noise fluctuates massively, after all
 
-				sensitivity += interval * 2;
-				break;
-			}
-		}
+                sensitivity += interval * 2;
+                break;
+            }
+        }
 
-		return sensitivity;
-	}
+        return sensitivity;
+    }
 
-	// unless you have some special case requiring internal functions,
-	// use getSkeleton in your application's main loop
+    // unless you have some special case requiring internal functions,
+    // use getSkeleton in your application's main loop
 
-	std::vector<Skeleton*> getSkeleton
-	(
-		std::vector<Skeleton*> oldSkeletons,
-		cv::VideoCapture& stream, // webcam stream
-		FrameHistory& history, // history for computing delta
-		int userSensitivity, // precalibrated value for thresholding
-		int minimumArclength, // threshold for discarding noise contours
-		double scaleFactor, // (fractional) value for scaling the image (optimization)
-	    bool shouldFlip // flip webcam image?
-	) {
-		// read a frame and optionally flip it
+    std::vector<Skeleton*> getSkeleton
+    (
+        std::vector<Skeleton*> oldSkeletons,
+        cv::VideoCapture& stream, // webcam stream
+        FrameHistory& history, // history for computing delta
+        int userSensitivity, // precalibrated value for thresholding
+        int minimumArclength, // threshold for discarding noise contours
+        double scaleFactor, // (fractional) value for scaling the image (optimization)
+        bool shouldFlip // flip webcam image?
+    ) {
+        // read a frame and optionally flip it
 
-		Mat frame, flipped_frame;
-		stream.read(flipped_frame);
+        Mat frame, flipped_frame;
+        stream.read(flipped_frame);
 
-		if(shouldFlip) {
-			flip(flipped_frame, frame, 1);
-		} else {
-			frame = flipped_frame; // flipping was not requested
-		}
+        if(shouldFlip) {
+            flip(flipped_frame, frame, 1);
+        } else {
+            frame = flipped_frame; // flipping was not requested
+        }
 
-		// get motion delta
-		Mat delta = history.motion(frame);
-		history.append(frame);
+        // get motion delta
+        Mat delta = history.motion(frame);
+        history.append(frame);
 
-		Mat outMask;
+        Mat outMask;
 
-		imshow("Webcam", frame);
+        imshow("Webcam", frame);
 
-		// resize down image to speed up calculations
-		resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
-		resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
+        // resize down image to speed up calculations
+        resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
+        resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
-		//resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		//imshow("Delta", outMask);
+        //resize(delta, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+        //imshow("Delta", outMask);
 
-		//resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		//imshow("Mask", outMask);
+        //resize(mask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+        //imshow("Mask", outMask);
 
-		//Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
+        //Mat simplifiedUserMask = simplifyUserMask(mask, frame, minimumArclength);
 
-		//resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
-		//imshow("Simplified Mask", outMask);
+        //resize(simplifiedUserMask, outMask, Size(0, 0), 0.5 / scaleFactor, 0.5 / scaleFactor);
+        //imshow("Simplified Mask", outMask);
 
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
         
@@ -471,10 +471,10 @@ namespace ct {
 
         imshow("High-level mask", mask);
 
-		std::vector<Point> centers;
-		std::vector<std::vector<Point> > edgePointsList;
-		centers = getEdgePoints(frame, mask, minimumArclength, true, edgePointsList);
+        std::vector<Point> centers;
+        std::vector<std::vector<Point> > edgePointsList;
+        centers = getEdgePoints(frame, mask, minimumArclength, true, edgePointsList);
 
-		return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
-	}
+        return skeletonFromEdgePoints(oldSkeletons, centers, edgePointsList, frame.cols, frame.rows);
+    }
 };
