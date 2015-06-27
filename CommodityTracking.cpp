@@ -283,58 +283,74 @@ namespace ct {
 		}
 	}
 
+    // iterates through the haystack, runs the scoring function, and returns the highest scorer
+    
+    static Point findLimb(std::vector<Point>& haystack, cv::Point center, std::function<double(cv::Point, cv::Point)> scorer ) {
+        if(haystack.size() == 0) return null;
+        
+        double maxScore = 0; // maintain a running max
+        int maxScoreIndex = 0; 
+        
+        for(int i = 0; i < haystack.size(); ++i) {
+            double score = scorer(cetner, haystack[i]);
+
+            if(score > maxScore) {
+                maxScore = score;
+                maxScoreIndex = i;
+            }
+        }
+
+        return haystack[maxScoreIndex];
+    }
+
+    // scoring functions to be used with findLimb
+    // implement some fancy hand chosen equations :)
+    
+    static double scoreHead(cv::Point center, cv::Point point) {
+        double alpha = 1.5;
+        
+        return (
+                alpha * (
+                    (center.y - point.y)
+                ) / (center.y)
+               ) - (
+                  abs(center.x - point.x)
+                 / center.x
+                 );
+    }
+
+    static double scoreLeftArm(cv::Point center, cv::Point point) {
+       return (alpha * (center.x - point.x)) + (center.y - point.y);
+    }
+
+
+    }
+
 	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
 		vector<Skeleton*> skeletons;
 
 		// each center corresponds to a skeleton { mostly }
 		for(int skeleton = 0; skeleton < centers.size(); ++skeleton) {
-			// vector, as duplicate points *will* be found
-			vector<Point> leftHands, rightHands, leftLegs, rightLegs, heads, unclassifieds;
+            // the actual limb calculations are done outside of this function
 
-			// iterate through the list of points (limbs, typically)
-			for(int limb = 0; limb < edgePointsList[skeleton].size(); ++limb) {
-				// classify based on position relative to center
+            Point head, leftHand, rightHand, leftLeg, rightLeg;
 
-				// heads are far above the center: delta Y > threshold
-				// but also close X wise to the center: delta X < threshold
-				if( (centers[skeleton].y - edgePointsList[skeleton][limb].y) > 7
-					&& (abs(centers[skeleton].x - edgePointsList[skeleton][limb].x)) < 4) {
-					heads.push_back(edgePointsList[skeleton][limb]);
-				}
-
-				// legs are far below the center: delta Y > threshold
-				else if( (edgePointsList[skeleton][limb].y - centers[skeleton].y) > 8) {
-					// determine which leg is whcih by relative X and push to the respective vector
-
-					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
-						rightLegs.push_back(edgePointsList[skeleton][limb]);
-					} else {
-						leftLegs.push_back(edgePointsList[skeleton][limb]);
-					}
-				}
-
-				// hands are far to the left or right of the center: abs(delta X) > threshold
-				else if( abs(edgePointsList[skeleton][limb].x - centers[skeleton].x) > 13 ) {
-					if(edgePointsList[skeleton][limb].x - centers[skeleton].x > 0) {
-						rightHands.push_back(edgePointsList[skeleton][limb]);
-					} else {
-						leftHands.push_back(edgePointsList[skeleton][limb]);
-					}
-				}
-
-				// CommodityTracking doesn't understand other body parts,
-				// but it will save their points in case the application does
-				else {
-					unclassifieds.push_back(edgePointsList[skeleton][limb]);
-				}
-			}
-
-			// since we have vectors filled with duplicate points,
-			// we will average them together to find the true limb position
-
-			Point rightHand = averagePoints(rightHands), leftHand = averagePoints(leftHands),
-				  rightLeg = averagePoints(rightLegs), leftLeg = averagePoints(leftLegs),
-				  head = averagePoints(heads);
+            // we classify limbs based on their position relative to the center
+            
+            // naively, we could say:
+            // heads have a much higher Y coordinate but identical X,
+            // hands have a somewhat higher Y coordinate but large absolute X
+            // however, it is more effective to somehow score the limbs
+            // at a high-level, we rate each limb as a candidate for each limb type,
+            // and choose the highest ranking limb for each category to be the actual limb
+           
+            // we'll pass these off to other functions 
+   
+            head = findLimb(edgePointsList[skeleton], scoreHead);
+            leftHand = findLimb(edgePointsList[skeleton], scoreLeftHand);
+            rightHand = findLimb(edgePointsList[skeleton], scoreRightHand);
+            leftLeg = findLimb(edgePointsList[skeleton], scoreLeftLeg);
+            rightLeg = findLimb(edgePointsList[skeleton], scoreRightLeg);
 
 			Skeleton* skel = new Skeleton(leftHand, rightHand, leftLeg, rightLeg, centers[skeleton], head, width, height);
 
