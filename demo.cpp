@@ -60,16 +60,11 @@ int main(int argc, char** argv) {
             rectangle(visualization, skeleton->head(), skeleton->head(), Scalar(255, 0, 255), 100);
 
             // check for gestures
+            
             if( (skeleton->rightHand().y < 64 && skeleton->leftHand().y > 64 && skeleton->rightHand().x > 64)) {
-                putText(visualization, "Coin Right!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
+                putText(visualization, "Coin Right!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 4, Scalar(255, 0, 0), 10);
             } else if( (skeleton->leftHand().y < 64 && skeleton->rightHand().y > 64 && skeleton->leftHand().x > 64)) {
-                putText(visualization, "Coin Left!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
-            } else if( (skeleton->rightHand().y - skeleton->center().y) > 50
-                && (skeleton->leftHand().y - skeleton->center().y) < -50) {
-                putText(visualization, "Right Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
-            } else if( (skeleton->leftHand().y - skeleton->center().y) > 50
-                && (skeleton->rightHand().y - skeleton->center().y) < -50) {
-                putText(visualization, "Left Plane", Point(100, 100), FONT_HERSHEY_SIMPLEX, 5, Scalar(255, 0, 0), 10);
+                putText(visualization, "Coin Left!", Point(100, 100), FONT_HERSHEY_SIMPLEX, 4, Scalar(255, 0, 0), 10);
             }
         }
 
