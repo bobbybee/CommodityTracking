@@ -309,15 +309,14 @@ namespace ct {
     
     static double scoreHead(cv::Point center, cv::Point point) {
         double alpha = 1.5;
-        
-        return (
-                alpha * (
+        double beta = 1.2;
+
+        return (alpha * (
                     (center.y - point.y)
-                ) / (center.y)
-               ) - (
-                  abs(center.x - point.x)
-                 / center.x
-                 );
+                ) / center.y)
+              - (beta * (
+                     abs(center.x - point.x)
+                ) / center.x);
     }
 
     static double scoreLeftHand(cv::Point center, cv::Point point) {
@@ -332,12 +331,16 @@ namespace ct {
 
     static double scoreLeftLeg(cv::Point center, cv::Point point) {
         double alpha = 1.5;
-        return (alpha * (center.x - point.x)) + (point.y - center.y);
+        double beta = 2;
+
+        return (alpha * (center.x - point.x)) + (beta * (point.y - center.y));
     }
 
     static double scoreRightLeg(cv::Point center, cv::Point point) {
         double alpha = 1.5;
-        return (alpha * (point.x - center.x)) + (point.y - center.y);
+        double beta = 2;
+
+        return (alpha * (point.x - center.x)) + (beta * (point.y - center.y));
     }
 
 	std::vector<Skeleton*> skeletonFromEdgePoints(std::vector<Skeleton*> history, std::vector<cv::Point>& centers, std::vector<std::vector<cv::Point> >& edgePointsList, int width, int height) {
