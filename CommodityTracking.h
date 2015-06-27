@@ -188,7 +188,8 @@ namespace ct {
      * and manages all of the pre/post processing needed for watershed itself
      * highUserMask provides a very high-level, one-size-fits-all solution for user mask extraction,
      * and is therefore used by CommodityTracking itself.
-     * additionally, it is useful for general motion-based segmentation algorithms
+     * additionally, it is useful for general motion-based segmentation algorithms.
+     * In general, highUserMask should be called for manual user detection, if skeleton tracking is not desired.
      */
 
     cv::Mat highUserMask(cv::Mat& delta, cv::Mat& frame, int minimumArclength, double sensitivity);
