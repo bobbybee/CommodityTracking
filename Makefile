@@ -20,5 +20,4 @@ all:
 	$(LIBRARY_BUILD_ARGS)
 
 	g++ -o demo demo.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I. $(LINKLIB) -O3
-	g++ -o platformer_demo platformer_demo.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I. $(LINKLIB) -O3
 	g++ -o segmentation segmentation.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I. $(LINKLIB) -O3
