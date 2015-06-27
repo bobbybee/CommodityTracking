@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     FrameHistory history(stream);
 
     int minimumArclength = 100;
-    int userSensitivity = 256; 
+    int userSensitivity = (argc == 1) ? 260 : atoi(argv[1]); 
 
     vector<Skeleton*> oldSkeletons;
 
