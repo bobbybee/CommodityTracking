@@ -211,8 +211,15 @@ namespace ct {
     }
 
     std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
-        Mat edges;
-        Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
+        // implement edge detection through Difference of Gaussian
+        // this is a much faster alternative to Canny edge detection
+
+        cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
+        Mat g1, g2;
+        GaussianBlur(simplifiedUserMask, g1, Size(1,1), 0);
+        GaussianBlur(simplifiedUserMask, g2, Size(3,3), 0);
+        
+        Mat edges = g1 - g2;
 
         vector<vector<Point> > contours;
         vector<Vec4i> hierarchy;
