@@ -20,9 +20,12 @@ namespace ct {
             /**
             * FrameHistory constructor from a VideoCapture stream.
             * The first few frames are captured to avoid a race condition.
+            * scaleFactor is a double in the interval (0, 1]
+            * It resizes each frame by this scale as an optimization.
+            * Numbers closer to 1 will have better accuracy, but will be slower to process.
             */
 
-            FrameHistory(cv::VideoCapture& stream);
+            FrameHistory(cv::VideoCapture& stream, double scaleFactor);
 
             /**
             * Appends the latest frame from the stream to the history;
@@ -46,6 +49,7 @@ namespace ct {
             cv::Mat getLastFrame();
         private:
             cv::Mat m_lastFrame, m_twoFrame, m_threeFrame, m_fourFrame;
+            double m_scaleFactor;
     };
 
     /**
@@ -245,7 +249,6 @@ namespace ct {
         FrameHistory& history, // history for computing delta
         int userSensitivity, // precalibrated value for thresholding
         int minimumArclength, // threshold for discarding noise contours
-        double scaleFactor, // (fractional) value for scaling the image (optimization)
         bool shouldFlip // flip webcam image?
     );
 

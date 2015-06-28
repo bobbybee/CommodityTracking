@@ -14,10 +14,10 @@ ifeq ($(shell uname),Linux)
 endif
 
 all:
-	g++ -o CommodityTracking.o -c -fPIC src/CommodityTracking.cpp -O3 --std=c++11
+	g++ -o CommodityTracking.o -c -fPIC src/CommodityTracking.cpp -O3 --std=c++11 -pg
 
 	$(LIBRARY_CLEAN)
 	$(LIBRARY_BUILD_ARGS)
 
-	g++ -o bin/demo examples/demo.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3
-	g++ -o bin/segmentation examples/segmentation.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3
+	g++ -o bin/demo examples/demo.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3 -pg
+	g++ -o bin/segmentation examples/segmentation.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3 -pg

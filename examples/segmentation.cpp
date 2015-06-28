@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     // camera stream
     
     VideoCapture stream(0);
-    FrameHistory history(stream);
+    FrameHistory history(stream, 0.25);
 
     // sensitivity calibration
     // TODO: phase this step out

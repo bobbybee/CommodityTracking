@@ -6,7 +6,7 @@ using namespace cv;
 namespace ct {
     SkeletonTracker::SkeletonTracker() :
                                         m_stream(new VideoCapture(0)),
-                                        m_history(new FrameHistory(*m_stream)),
+                                        m_history(new FrameHistory(*m_stream, 0.25)),
                                         m_minimumArclength(100),
                                         m_userSensitivity(260)
     {
@@ -14,7 +14,7 @@ namespace ct {
     }
 
     vector<Skeleton*> SkeletonTracker::getSkeletons() {
-         vector<Skeleton*> skeletons = getSkeleton(m_oldSkeletons, *m_stream, *m_history, m_userSensitivity, m_minimumArclength, 0.5, true);
+         vector<Skeleton*> skeletons = getSkeleton(m_oldSkeletons, *m_stream, *m_history, m_userSensitivity, m_minimumArclength, true);
          m_oldSkeletons = skeletons;
 
          return skeletons;
@@ -59,11 +59,20 @@ namespace ct {
         smoothLimb(&old->m_head, &m_head, 2);
     }
 
-    FrameHistory::FrameHistory(VideoCapture& stream) {
+    FrameHistory::FrameHistory(VideoCapture& stream, double scaleFactor)
+                              : m_scaleFactor(scaleFactor)
+    {
         stream.read(m_lastFrame); // fixes a race condition in the first few frames
+        resize(m_lastFrame, m_lastFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+
+        stream.read(m_twoFrame); // fixes a race condition in the first few frames
+        resize(m_twoFrame, m_twoFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+
         stream.read(m_threeFrame); // fixes a race condition in the first few frames
-        stream.read(m_twoFrame);
-        stream.read(m_fourFrame);
+        resize(m_threeFrame, m_threeFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+        
+        stream.read(m_fourFrame); // fixes a race condition in the first few frames
+        resize(m_fourFrame, m_fourFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
     }
 
     void FrameHistory::append(Mat frame) {
@@ -71,6 +80,8 @@ namespace ct {
         m_threeFrame = m_twoFrame;
         m_twoFrame = m_lastFrame;
         m_lastFrame = frame;
+        
+        resize(m_lastFrame, m_lastFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
     }
 
     Mat FrameHistory::motion(Mat frame) {
@@ -391,7 +402,7 @@ namespace ct {
     // in order to minimize noise without compromising flexibility
 
     int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
-        FrameHistory history(stream);
+        FrameHistory history(stream, 1);
         int sensitivity = initialUserSensitivity;
 
         while(sensitivity < 1000) {
@@ -430,7 +441,6 @@ namespace ct {
         FrameHistory& history, // history for computing delta
         int userSensitivity, // precalibrated value for thresholding
         int minimumArclength, // threshold for discarding noise contours
-        double scaleFactor, // (fractional) value for scaling the image (optimization)
         bool shouldFlip // flip webcam image?
     ) {
         // read a frame and optionally flip it
@@ -449,10 +459,6 @@ namespace ct {
         history.append(frame);
 
         Mat outMask;
-
-        // resize down image to speed up calculations
-        resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
-        resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
         Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);
