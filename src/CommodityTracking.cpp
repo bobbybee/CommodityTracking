@@ -124,17 +124,9 @@ namespace ct {
 
     // NOTE: may trash original mask. clone if preservation is needed
     cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength) {
-        // prepare for Canny + contour detection
         cvtColor(mask, mask, CV_BGR2GRAY);
-
         vector<vector<Point> > contours;
         vector<Vec4i> hierarchy;
-
-        // extract edges using Canny
-        Mat edges;
-        Canny(mask, edges, 20, 20 * 3, 3);
-
-        cvtColor(edges, edges, CV_GRAY2BGR);
 
         // find contours, simplify and draw large contours to contourOut
         Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
