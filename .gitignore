@@ -9,3 +9,4 @@ lib/*
 slide_demos/*
 latex/*
 *.jpg
+src/latex/*
