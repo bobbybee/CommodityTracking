@@ -4,6 +4,26 @@
 using namespace cv;
 
 namespace ct {
+    SkeletonTracker::SkeletonTracker() :
+                                        m_stream(new VideoCapture(0)),
+                                        m_history(new FrameHistory(*m_stream)),
+                                        m_minimumArclength(100),
+                                        m_userSensitivity(260)
+    {
+    
+    }
+
+    vector<Skeleton*> SkeletonTracker::getSkeletons() {
+         vector<Skeleton*> skeletons = getSkeleton(m_oldSkeletons, *m_stream, *m_history, m_userSensitivity, m_minimumArclength, 0.5, true);
+         m_oldSkeletons = skeletons;
+
+         return skeletons;
+    }
+
+    Mat SkeletonTracker::cloneFrame() {
+        return m_history->getLastFrame().clone();
+    }
+
     void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
         if( (newLimb->x == 0 && oldLimb->x != 0) || (newLimb->y == 0 && oldLimb->y != 0)) {
             newLimb->x = oldLimb->x;
