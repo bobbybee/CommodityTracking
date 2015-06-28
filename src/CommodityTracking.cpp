@@ -154,7 +154,7 @@ namespace ct {
         // so the net erosion / dilation is still zero, kind of
         // but this transform has some useful properties for performing watershed segmentation
 
-        int erosionAmount = 10;
+        int erosionAmount = 15;
         Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
 
         Mat thin;
