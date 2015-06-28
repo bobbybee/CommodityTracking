@@ -249,6 +249,7 @@ namespace ct {
         FrameHistory& history, // history for computing delta
         int userSensitivity, // precalibrated value for thresholding
         int minimumArclength, // threshold for discarding noise contours
+        double scaleFactor, // see FrameHistory constructor
         bool shouldFlip // flip webcam image?
     );
 

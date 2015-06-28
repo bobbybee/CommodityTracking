@@ -6,7 +6,7 @@ using namespace cv;
 namespace ct {
     SkeletonTracker::SkeletonTracker() :
                                         m_stream(new VideoCapture(0)),
-                                        m_history(new FrameHistory(*m_stream, 0.25)),
+                                        m_history(new FrameHistory(*m_stream, 0.5)),
                                         m_minimumArclength(100),
                                         m_userSensitivity(260)
     {
@@ -14,7 +14,7 @@ namespace ct {
     }
 
     vector<Skeleton*> SkeletonTracker::getSkeletons() {
-         vector<Skeleton*> skeletons = getSkeleton(m_oldSkeletons, *m_stream, *m_history, m_userSensitivity, m_minimumArclength, true);
+         vector<Skeleton*> skeletons = getSkeleton(m_oldSkeletons, *m_stream, *m_history, m_userSensitivity, m_minimumArclength, 0.5, true);
          m_oldSkeletons = skeletons;
 
          return skeletons;
@@ -81,7 +81,6 @@ namespace ct {
         m_twoFrame = m_lastFrame;
         m_lastFrame = frame;
         
-        resize(m_lastFrame, m_lastFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
     }
 
     Mat FrameHistory::motion(Mat frame) {
@@ -441,6 +440,7 @@ namespace ct {
         FrameHistory& history, // history for computing delta
         int userSensitivity, // precalibrated value for thresholding
         int minimumArclength, // threshold for discarding noise contours
+        double scaleFactor, // see FrameHistory constructor
         bool shouldFlip // flip webcam image?
     ) {
         // read a frame and optionally flip it
@@ -455,9 +455,9 @@ namespace ct {
         }
 
         // get motion delta
+        resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
         Mat delta = history.motion(frame);
         history.append(frame);
-
         Mat outMask;
 
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
