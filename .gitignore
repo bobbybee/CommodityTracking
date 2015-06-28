@@ -1,0 +1,11 @@
+*.o
+
+bin/*
+!bin/README.md
+
+lib/*
+!lib/README.md
+
+slide_demos/*
+latex/*
+*.jpg

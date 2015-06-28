@@ -1,0 +1,1 @@
+The actual _CommodityTracking_ library binary is built to this directory. Either copy the file(s) in this directory to your operating systems library path (typically `/usr/lib` or similar)`, or add this directory to your compiler's link path (`-L ./lib` on many compilers).
