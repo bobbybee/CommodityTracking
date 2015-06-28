@@ -38,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -102,6 +101,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 Public Member Functions</h2></td></tr>
 <tr class="memitem:afa1523598596fc289a2f486b0673f539"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classct_1_1_skeleton.html#afa1523598596fc289a2f486b0673f539">Skeleton</a> (cv::Point <a class="el" href="classct_1_1_skeleton.html#a98228e54ce800433cf241ffdbcd40aa8">leftHand</a>, cv::Point <a class="el" href="classct_1_1_skeleton.html#ace74578d55083cc9604f76490b80e446">rightHand</a>, cv::Point <a class="el" href="classct_1_1_skeleton.html#a3649bf83f322d52502feafce13c1ff82">leftLeg</a>, cv::Point <a class="el" href="classct_1_1_skeleton.html#a539ca5e9e1d5c6dd596d3d0edd6337b0">rightLeg</a>, cv::Point <a class="el" href="classct_1_1_skeleton.html#a52747c7f11c96f71e06165dfe2dccc9e">center</a>, cv::Point <a class="el" href="classct_1_1_skeleton.html#abf12c8c86c367e7df03ab533abd2af0f">head</a>, int width, int height)</td></tr>
 <tr class="separator:afa1523598596fc289a2f486b0673f539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f9f46cd625b5a5d26293be0c4e31667"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f9f46cd625b5a5d26293be0c4e31667"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>smoothFor</b> (<a class="el" href="classct_1_1_skeleton.html">Skeleton</a> *old)</td></tr>
+<tr class="separator:a6f9f46cd625b5a5d26293be0c4e31667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb4ba0108e99f8cf795a2ddd92e06c70"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeb4ba0108e99f8cf795a2ddd92e06c70"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>smoothLimb</b> (cv::Point2d *oldLimb, cv::Point2d *newLimb, int thresh)</td></tr>
+<tr class="separator:aeb4ba0108e99f8cf795a2ddd92e06c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21063afdbeee10f158e1846f0a979ad5"><td class="memItemLeft" align="right" valign="top">cv::Point2d&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classct_1_1_skeleton.html#a21063afdbeee10f158e1846f0a979ad5">normalize</a> (cv::Point2d p)</td></tr>
 <tr class="separator:a21063afdbeee10f158e1846f0a979ad5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a908aa5869693d151aacbdc3aeeae1a1e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classct_1_1_skeleton.html#a908aa5869693d151aacbdc3aeeae1a1e">setMagnification</a> (cv::Mat m)</td></tr>
@@ -461,13 +466,14 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>m_magHeight</b></td></
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="_commodity_tracking_8h_source.html">CommodityTracking.h</a></li>
+<li>CommodityTracking.cpp</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 12 2015 13:10:00 for CommodityTracking by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jun 28 2015 11:57:05 for CommodityTracking by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

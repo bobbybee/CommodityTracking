@@ -38,7 +38,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -103,14 +102,16 @@ Functions</h2></td></tr>
 <tr class="separator:a4e96dbe86f903970e680ecca7ea4d1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ec15a370267aee5f2c4a53a90415f96"><td class="memItemLeft" align="right" valign="top">cv::Mat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#a9ec15a370267aee5f2c4a53a90415f96">simplifyUserMask</a> (cv::Mat &amp;mask, cv::Mat &amp;frame, int minimumArclength)</td></tr>
 <tr class="separator:a9ec15a370267aee5f2c4a53a90415f96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac93704c6d49e76e2cc3604636c0ac05e"><td class="memItemLeft" align="right" valign="top">cv::Mat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#ac93704c6d49e76e2cc3604636c0ac05e">highUserMask</a> (cv::Mat &amp;delta, cv::Mat &amp;frame, int minimumArclength, double sensitivity)</td></tr>
+<tr class="separator:ac93704c6d49e76e2cc3604636c0ac05e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5775e19f3d899f271bf4ba3732d0a528"><td class="memItemLeft" align="right" valign="top">std::vector&lt; cv::Point &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#a5775e19f3d899f271bf4ba3732d0a528">getEdgePoints</a> (cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector&lt; std::vector&lt; cv::Point &gt; &gt; &amp;edgePointsList)</td></tr>
 <tr class="separator:a5775e19f3d899f271bf4ba3732d0a528"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71d5c8af6990f81429e665ae8563e3b2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#a71d5c8af6990f81429e665ae8563e3b2">skeletonFromEdgePoints</a> (std::vector&lt; cv::Point &gt; &amp;centers, std::vector&lt; std::vector&lt; cv::Point &gt; &gt; &amp;edgePointsList, int width, int height)</td></tr>
-<tr class="separator:a71d5c8af6990f81429e665ae8563e3b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb1f04fe68910990ee9c4483a048011e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#abb1f04fe68910990ee9c4483a048011e">skeletonFromEdgePoints</a> (std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt; history, std::vector&lt; cv::Point &gt; &amp;centers, std::vector&lt; std::vector&lt; cv::Point &gt; &gt; &amp;edgePointsList, int width, int height)</td></tr>
+<tr class="separator:abb1f04fe68910990ee9c4483a048011e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc9afa041c4b84691258be719e7d9cd4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#adc9afa041c4b84691258be719e7d9cd4">autoCalibrateSensitivity</a> (int initialUserSensitivity, cv::VideoCapture &amp;stream, int minimumArclength, int interval)</td></tr>
 <tr class="separator:adc9afa041c4b84691258be719e7d9cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ef32e29885cbc7132cebf33c5f0edc2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#a7ef32e29885cbc7132cebf33c5f0edc2">getSkeleton</a> (cv::VideoCapture &amp;stream, <a class="el" href="classct_1_1_frame_history.html">FrameHistory</a> &amp;history, int userSensitivity, int minimumArclength, double scaleFactor, bool shouldFlip)</td></tr>
-<tr class="separator:a7ef32e29885cbc7132cebf33c5f0edc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb8756e0d83d9f7bc2713ba079338324"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacect.html#abb8756e0d83d9f7bc2713ba079338324">getSkeleton</a> (std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt; oldSkeletons, cv::VideoCapture &amp;stream, <a class="el" href="classct_1_1_frame_history.html">FrameHistory</a> &amp;history, int userSensitivity, int minimumArclength, double scaleFactor, bool shouldFlip)</td></tr>
+<tr class="separator:abb8756e0d83d9f7bc2713ba079338324"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Main namespace for CommodityTracking functions </p>
@@ -226,13 +227,19 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7ef32e29885cbc7132cebf33c5f0edc2"></a>
+<a class="anchor" id="abb8756e0d83d9f7bc2713ba079338324"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt; ct::getSkeleton </td>
           <td>(</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td>
+          <td class="paramname"><em>oldSkeletons</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">cv::VideoCapture &amp;&#160;</td>
           <td class="paramname"><em>stream</em>, </td>
         </tr>
@@ -277,6 +284,45 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ac93704c6d49e76e2cc3604636c0ac05e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cv::Mat ct::highUserMask </td>
+          <td>(</td>
+          <td class="paramtype">cv::Mat &amp;&#160;</td>
+          <td class="paramname"><em>delta</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">cv::Mat &amp;&#160;</td>
+          <td class="paramname"><em>frame</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>minimumArclength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>sensitivity</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>highUserMask implements watershed segmentation it internally leverages simplifyUserMask and extractUserMaskfor its input, and manages all of the pre/post processing needed for watershed itself highUserMask provides a very high-level, one-size-fits-all solution for user mask extraction, and is therefore used by CommodityTracking itself. additionally, it is useful for general motion-based segmentation algorithms. In general, highUserMask should be called for manual user detection, if skeleton tracking is not desired. </p>
+
+</div>
+</div>
 <a class="anchor" id="a9ec15a370267aee5f2c4a53a90415f96"></a>
 <div class="memitem">
 <div class="memproto">
@@ -310,13 +356,19 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a71d5c8af6990f81429e665ae8563e3b2"></a>
+<a class="anchor" id="abb1f04fe68910990ee9c4483a048011e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt; ct::skeletonFromEdgePoints </td>
           <td>(</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classct_1_1_skeleton.html">Skeleton</a> * &gt;&#160;</td>
+          <td class="paramname"><em>history</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">std::vector&lt; cv::Point &gt; &amp;&#160;</td>
           <td class="paramname"><em>centers</em>, </td>
         </tr>
@@ -352,7 +404,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 12 2015 13:10:00 for CommodityTracking by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jun 28 2015 11:57:05 for CommodityTracking by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
