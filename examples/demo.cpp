@@ -7,23 +7,13 @@ using namespace cv;
 using namespace ct;
 
 int main(int argc, char** argv) {
-    // initialize camera stream from the built-in webcam
-    // and initialize FrameHistory with that stream
-
-    VideoCapture stream(0);
-    FrameHistory history(stream);
-
-    int minimumArclength = 100;
-    int userSensitivity = (argc == 1) ? 260 : atoi(argv[1]); 
-
-    vector<Skeleton*> oldSkeletons;
+    SkeletonTracker tracker;
 
     for(;;) {
-        vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, 0.5, true);
-        oldSkeletons = skeletons;
+        vector<Skeleton*> skeletons = tracker.getSkeletons();
 
         // visualize skeletons
-        Mat visualization = history.getLastFrame().clone();
+        Mat visualization = tracker.cloneFrame(); 
         //Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
 
         int visWidth = visualization.cols, visHeight = visualization.rows;

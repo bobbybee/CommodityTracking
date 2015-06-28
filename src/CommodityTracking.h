@@ -156,7 +156,7 @@ namespace ct {
         int m_magWidth, m_magHeight;
 
     };
-
+    
     /**
     * extractUserMask computes a mask of the user given a generic motion mask.
     * Delta is a motion mask, as returned by FrameHistory::motion .
@@ -248,6 +248,51 @@ namespace ct {
         double scaleFactor, // (fractional) value for scaling the image (optimization)
         bool shouldFlip // flip webcam image?
     );
+
+    /**
+     * SkeletonTracker provides a very high-level interface to the underlying skeleton tracking algorithm
+     * It abstracts away all of the API calls needed to get a Skeleton object from CommodityTracking.
+     * For applications that are only concerned with high-level details of the skeleton as opposed to the underlying computer vision,
+     * the SkeletonTracking class is ideal and useful
+     */
+
+    class SkeletonTracker {
+        public:
+            /**
+             * This constructor should be used if there is no particular need for a more complex configuration.
+             * This uses the first video camera found, and the default values of the internal constants.
+             * It should be sufficient for many uses; if not, feel free to file an issue on Github.
+             */
+
+            SkeletonTracker();
+    
+            /**
+             * getSkeletons contains the main code for intefacing with CommodityTracking.
+             * getSkeletons provides a high-level function call that does exactly what it seems like:
+             * returns the skeletons, and nothing else.
+             * Internally, this function corresponds to a getSkeleton call with some extra maintenance performed,
+             * as getSkeleton is stateless and SkeletonTracker is not.
+             */
+
+            std::vector<ct::Skeleton*> getSkeletons();
+        
+            /**
+             * cloneFrame gets the last frame from the webcam, and clones it to allow the caller to safely write to the frame
+             * This is mainly useful for visualizations of the skeleton tracking process,
+             * as it allows a demo to draw over a user, for instance.
+             */
+
+            cv::Mat cloneFrame();
+        private:
+            std::vector<ct::Skeleton*> m_oldSkeletons;
+            
+            cv::VideoCapture* m_stream;
+            ct::FrameHistory* m_history;
+
+            int m_userSensitivity;
+            int m_minimumArclength;
+    };
 }
+
 
 #endif
