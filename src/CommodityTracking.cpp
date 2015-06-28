@@ -68,23 +68,23 @@ namespace ct {
         stream.read(m_twoFrame); // fixes a race condition in the first few frames
         resize(m_twoFrame, m_twoFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
 
-        stream.read(m_threeFrame); // fixes a race condition in the first few frames
-        resize(m_threeFrame, m_threeFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+        //stream.read(m_threeFrame); // fixes a race condition in the first few frames
+        //resize(m_threeFrame, m_threeFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
         
-        stream.read(m_fourFrame); // fixes a race condition in the first few frames
-        resize(m_fourFrame, m_fourFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+        //stream.read(m_fourFrame); // fixes a race condition in the first few frames
+        //resize(m_fourFrame, m_fourFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
     }
 
     void FrameHistory::append(Mat frame) {
-        m_fourFrame = m_threeFrame;
-        m_threeFrame = m_twoFrame;
+        //m_fourFrame = m_threeFrame;
+        //m_threeFrame = m_twoFrame;
         m_twoFrame = m_lastFrame;
         m_lastFrame = frame;
         
     }
 
     Mat FrameHistory::motion(Mat frame) {
-        Mat out1, out2, out3, out4, delta;
+        /*Mat out1, out2, out3, out4, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
         absdiff(m_threeFrame, frame, out3);
@@ -92,13 +92,13 @@ namespace ct {
 
         bitwise_or(out2, out3, delta);
         bitwise_or(delta, out1, delta);
-        bitwise_or(delta, out4, delta);
+        bitwise_or(delta, out4, delta);*/
 
-        /*Mat out1, out2, delta;
+        Mat out1, out2, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
 
-        bitwise_or(out1, out2, delta);*/
+        bitwise_or(out1, out2, delta);
 
         return delta;
     }

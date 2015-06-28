@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 
         // visualize skeletons
         Mat visualization = tracker.cloneFrame(); 
-        //Mat visualization = Mat::zeros(history.getLastFrame().size(), CV_8UC3);
+        resize(visualization, visualization, Size(0, 0), 2, 2); // scale up :) 
 
         int visWidth = visualization.cols, visHeight = visualization.rows;
 
