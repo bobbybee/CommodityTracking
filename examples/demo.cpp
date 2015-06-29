@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
         imshow("Visualization", visualization);
 
-        if(waitKey(16) == 27) {
+        if(waitKey(20) == 27) {
             break;
         }
     }
