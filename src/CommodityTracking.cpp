@@ -6,7 +6,7 @@ using namespace cv;
 namespace ct {
     SkeletonTracker::SkeletonTracker() :
                                         m_stream(new VideoCapture(0)),
-                                        m_history(new FrameHistory(*m_stream)),
+                                        m_history(new FrameHistory(*m_stream, 0.5)),
                                         m_minimumArclength(100),
                                         m_userSensitivity(260)
     {
@@ -22,6 +22,10 @@ namespace ct {
 
     Mat SkeletonTracker::cloneFrame() {
         return m_history->getLastFrame().clone();
+    }
+
+    Size SkeletonTracker::webcamDimensions() {
+        return m_history->getLastFrame().size();
     }
 
     void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
@@ -59,22 +63,32 @@ namespace ct {
         smoothLimb(&old->m_head, &m_head, 2);
     }
 
-    FrameHistory::FrameHistory(VideoCapture& stream) {
+    FrameHistory::FrameHistory(VideoCapture& stream, double scaleFactor)
+                              : m_scaleFactor(scaleFactor)
+    {
         stream.read(m_lastFrame); // fixes a race condition in the first few frames
-        stream.read(m_threeFrame); // fixes a race condition in the first few frames
-        stream.read(m_twoFrame);
-        stream.read(m_fourFrame);
+        resize(m_lastFrame, m_lastFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+
+        stream.read(m_twoFrame); // fixes a race condition in the first few frames
+        resize(m_twoFrame, m_twoFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+
+        //stream.read(m_threeFrame); // fixes a race condition in the first few frames
+        //resize(m_threeFrame, m_threeFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
+        
+        //stream.read(m_fourFrame); // fixes a race condition in the first few frames
+        //resize(m_fourFrame, m_fourFrame, Size(0, 0), m_scaleFactor, m_scaleFactor);
     }
 
     void FrameHistory::append(Mat frame) {
-        m_fourFrame = m_threeFrame;
-        m_threeFrame = m_twoFrame;
+        //m_fourFrame = m_threeFrame;
+        //m_threeFrame = m_twoFrame;
         m_twoFrame = m_lastFrame;
         m_lastFrame = frame;
+        
     }
 
     Mat FrameHistory::motion(Mat frame) {
-        Mat out1, out2, out3, out4, delta;
+        /*Mat out1, out2, out3, out4, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
         absdiff(m_threeFrame, frame, out3);
@@ -82,13 +96,13 @@ namespace ct {
 
         bitwise_or(out2, out3, delta);
         bitwise_or(delta, out1, delta);
-        bitwise_or(delta, out4, delta);
+        bitwise_or(delta, out4, delta);*/
 
-        /*Mat out1, out2, delta;
+        Mat out1, out2, delta;
         absdiff(m_twoFrame, frame, out1);
         absdiff(m_lastFrame, frame, out2);
 
-        bitwise_or(out1, out2, delta);*/
+        bitwise_or(out1, out2, delta);
 
         return delta;
     }
@@ -114,17 +128,9 @@ namespace ct {
 
     // NOTE: may trash original mask. clone if preservation is needed
     cv::Mat simplifyUserMask(cv::Mat& mask, cv::Mat& frame, int minimumArclength) {
-        // prepare for Canny + contour detection
         cvtColor(mask, mask, CV_BGR2GRAY);
-
         vector<vector<Point> > contours;
         vector<Vec4i> hierarchy;
-
-        // extract edges using Canny
-        Mat edges;
-        Canny(mask, edges, 20, 20 * 3, 3);
-
-        cvtColor(edges, edges, CV_GRAY2BGR);
 
         // find contours, simplify and draw large contours to contourOut
         Mat contourOut = Mat::zeros(frame.size(), CV_8UC3);
@@ -152,7 +158,7 @@ namespace ct {
         // so the net erosion / dilation is still zero, kind of
         // but this transform has some useful properties for performing watershed segmentation
 
-        int erosionAmount = 10;
+        int erosionAmount = 15;
         Mat el = getStructuringElement(MORPH_RECT, Size(2 * erosionAmount + 1, 2 * erosionAmount + 1), Point(erosionAmount, erosionAmount));
 
         Mat thin;
@@ -209,8 +215,15 @@ namespace ct {
     }
 
     std::vector<cv::Point> getEdgePoints(cv::Mat frame, cv::Mat simplifiedUserMask, int minimumArclength, bool draw, std::vector<std::vector<cv::Point> >& edgePointsList) {
-        Mat edges;
-        Canny(simplifiedUserMask, edges, 300, 300 * 3, 3);
+        // implement edge detection through Difference of Gaussian
+        // this is a much faster alternative to Canny edge detection
+
+        cvtColor(simplifiedUserMask, simplifiedUserMask, CV_BGR2GRAY);
+        Mat g1, g2;
+        GaussianBlur(simplifiedUserMask, g1, Size(1,1), 0);
+        GaussianBlur(simplifiedUserMask, g2, Size(3,3), 0);
+        
+        Mat edges = g1 - g2;
 
         vector<vector<Point> > contours;
         vector<Vec4i> hierarchy;
@@ -291,10 +304,10 @@ namespace ct {
     static Point findLimb(std::vector<Point>& haystack, cv::Point center, std::function<double(cv::Point, cv::Point)> scorer ) {
         if(haystack.size() == 0) return Point(0, 0); // equivalent of returning null
         
-        double maxScore = 0; // maintain a running max
+        double maxScore = scorer(center, haystack[0]); // maintain a running max
         int maxScoreIndex = 0; 
         
-        for(int i = 0; i < haystack.size(); ++i) {
+        for(int i = 1; i < haystack.size(); ++i) {
             double score = scorer(center, haystack[i]);
 
             if(score > maxScore) {
@@ -310,15 +323,11 @@ namespace ct {
     // implement some fancy hand chosen equations :)
     
     static double scoreHead(cv::Point center, cv::Point point) {
-        double alpha = 1.5;
-        double beta = 1.2;
+        double alpha = 1;
 
-        return (alpha * (
-                    (center.y - point.y)
-                ) / center.y)
-              - (beta * (
-                     abs(center.x - point.x)
-                ) / center.x);
+        if(point.y > center.y) return -10000; // heads are above the waist!
+
+        return 1/((alpha * abs(center.x - point.x)+0.001));
     }
 
     static double scoreLeftHand(cv::Point center, cv::Point point) {
@@ -391,7 +400,7 @@ namespace ct {
     // in order to minimize noise without compromising flexibility
 
     int autoCalibrateSensitivity(int initialUserSensitivity, cv::VideoCapture& stream, int minimumArclength, int interval) {
-        FrameHistory history(stream);
+        FrameHistory history(stream, 1);
         int sensitivity = initialUserSensitivity;
 
         while(sensitivity < 1000) {
@@ -430,7 +439,7 @@ namespace ct {
         FrameHistory& history, // history for computing delta
         int userSensitivity, // precalibrated value for thresholding
         int minimumArclength, // threshold for discarding noise contours
-        double scaleFactor, // (fractional) value for scaling the image (optimization)
+        double scaleFactor, // see FrameHistory constructor
         bool shouldFlip // flip webcam image?
     ) {
         // read a frame and optionally flip it
@@ -445,14 +454,10 @@ namespace ct {
         }
 
         // get motion delta
+        resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
         Mat delta = history.motion(frame);
         history.append(frame);
-
         Mat outMask;
-
-        // resize down image to speed up calculations
-        resize(frame, frame, Size(0, 0), scaleFactor, scaleFactor);
-        resize(delta, delta, Size(0, 0), scaleFactor, scaleFactor);
 
         // compute mask using Collins et al + delta blur-threshold + watershed + contour discrimination
         Mat mask = highUserMask(delta, frame, minimumArclength, userSensitivity / 256);

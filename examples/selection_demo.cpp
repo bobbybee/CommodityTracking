@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   // and initialize FrameHistory with that stream
 
   VideoCapture stream(0);
-  FrameHistory history(stream);
+  FrameHistory history(stream, 0.25);
 
   // automatically calibrate userSensitivity
 
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   vector<Skeleton*> oldSkeletons;
 
   for(;;) {
-    vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, 0.5, true);
+    vector<Skeleton*> skeletons = getSkeleton(oldSkeletons, stream, history, userSensitivity, minimumArclength, true);
     oldSkeletons = skeletons;
 
     // visualize skeletons
