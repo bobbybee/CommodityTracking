@@ -24,6 +24,10 @@ namespace ct {
         return m_history->getLastFrame().clone();
     }
 
+    Size SkeletonTracker::webcamDimensions() {
+        return m_history->getLastFrame().size();
+    }
+
     void Skeleton::smoothLimb(cv::Point2d* oldLimb, cv::Point2d* newLimb, int thresh) {
         if( (newLimb->x == 0 && oldLimb->x != 0) || (newLimb->y == 0 && oldLimb->y != 0)) {
             newLimb->x = oldLimb->x;
@@ -300,10 +304,10 @@ namespace ct {
     static Point findLimb(std::vector<Point>& haystack, cv::Point center, std::function<double(cv::Point, cv::Point)> scorer ) {
         if(haystack.size() == 0) return Point(0, 0); // equivalent of returning null
         
-        double maxScore = 0; // maintain a running max
+        double maxScore = scorer(center, haystack[0]); // maintain a running max
         int maxScoreIndex = 0; 
         
-        for(int i = 0; i < haystack.size(); ++i) {
+        for(int i = 1; i < haystack.size(); ++i) {
             double score = scorer(center, haystack[i]);
 
             if(score > maxScore) {
@@ -319,15 +323,11 @@ namespace ct {
     // implement some fancy hand chosen equations :)
     
     static double scoreHead(cv::Point center, cv::Point point) {
-        double alpha = 1.5;
-        double beta = 1.2;
+        double alpha = 1;
 
-        return (alpha * (
-                    (center.y - point.y)
-                ) / center.y)
-              - (beta * (
-                     abs(center.x - point.x)
-                ) / center.x);
+        if(point.y > center.y) return -10000; // heads are above the waist!
+
+        return 1/((alpha * abs(center.x - point.x)+0.001));
     }
 
     static double scoreLeftHand(cv::Point center, cv::Point point) {

@@ -287,6 +287,13 @@ namespace ct {
              */
 
             cv::Mat cloneFrame();
+        
+            /**
+             * webcamDimensions returns the dimensions of the webcam to the application,
+             * providing a simple abstraction to the underlying OpenCV calls
+             */
+
+            cv::Size webcamDimensions();
         private:
             std::vector<ct::Skeleton*> m_oldSkeletons;
             

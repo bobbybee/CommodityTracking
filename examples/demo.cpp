@@ -13,8 +13,17 @@ int main(int argc, char** argv) {
         vector<Skeleton*> skeletons = tracker.getSkeletons();
 
         // visualize skeletons
-        Mat visualization = tracker.cloneFrame(); 
-        resize(visualization, visualization, Size(0, 0), 2, 2); // scale up :) 
+        
+        // to see the background, uncomment the next 3 lines
+        
+        // Mat visualization = tracker.cloneFrame(); 
+        // resize(visualization, visualization, Size(0, 0), 2, 2); // scale up :) 
+        
+        // and comment the next 2 lines
+         
+        Size size = tracker.webcamDimensions();
+        Mat visualization = Mat::zeros(size.height * 2, size.width * 2, CV_8UC3);
+        
 
         int visWidth = visualization.cols, visHeight = visualization.rows;
 
