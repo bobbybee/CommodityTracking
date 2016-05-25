@@ -19,5 +19,5 @@ all:
 	$(LIBRARY_CLEAN)
 	$(LIBRARY_BUILD_ARGS)
 
-	g++ -o bin/demo examples/demo.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3
-	g++ -o bin/segmentation examples/segmentation.cpp -lopencv_core -lopencv_highgui -lopencv_imgproc -I./src $(LINKLIB) -O3
+	g++ -o bin/demo examples/demo.cpp -I./src $(LINKLIB) -lopencv_core -lopencv_highgui -lopencv_imgproc -O3
+	g++ -o bin/segmentation examples/segmentation.cpp -I./src $(LINKLIB) -lopencv_core -lopencv_highgui -lopencv_imgproc -O3
